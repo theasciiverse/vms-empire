@@ -547,16 +547,6 @@ tell the user why.
 #define SAVE_MAGIC_LEN 11
 #define SAVE_VERSION 2
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
-#define STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
-#else
-#define STATIC_ASSERT(cond, msg) typedef char static_assert_##msg[(cond) ? 1 : -1]
-#endif
-
-//STATIC_ASSERT(sizeof(bool) == 1, bool_size_must_be_1);
-//STATIC_ASSERT(sizeof(loc_t) <= 4, loc_t_must_fit_int32);
-//STATIC_ASSERT(sizeof(long) <= 8, long_must_fit_int64);
-
 /*
 Save format (little-endian, field-wise, versioned):
 Header:
