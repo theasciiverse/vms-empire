@@ -5,7 +5,12 @@
 # See the file COPYING, distributed with empire, for restriction
 # and warranty information.
 
-VERS=$(shell sed -n <NEWS '/^[0-9]/s/:.*//p' | head -1)
+PREFIX      ?= /usr/local
+BINDIR      ?= $(PREFIX)/bin
+DATADIR     ?= $(PREFIX)/share
+MANDIR      ?= $(DATADIR)/man
+
+VERSION=$(shell sed -n <NEWS '/^[0-9]/s/:.*//p' | head -1)
 
 # Use -g to compile the program for debugging.
 #DEBUG = -g -DDEBUG
@@ -20,7 +25,7 @@ LIBS = -lncurses
 # You shouldn't have to modify anything below this line.
 
 # There's a dynamic format in the object-display routines; suppress the warning
-CFLAGS = $(DEBUG) $(PROFILE) -Wall -Wno-format-security
+CFLAGS = $(DEBUG) $(PROFILE) -Wall -Wextra -Werror -Wno-format-security -Wno-unused-parameter
 
 FILES = \
 	attack.c \
@@ -56,6 +61,8 @@ OFILES = \
 	usermove.o \
 	util.o
 
+# Build
+
 all: vms-empire
 
 vms-empire: $(OFILES)
@@ -82,11 +89,14 @@ empire.6: vms-empire.xml
 vms-empire.html: vms-empire.xml
 	xmlto html-nochunks vms-empire.xml
 
-TAGS: $(HEADERS) $(FILES)
-	etags $(HEADERS) $(FILES)
+clean:
+	rm -f *.o TAGS vms-empire
+	rm -f *.6 *.html
 
-lint: $(FILES)
-	lint -u -D$(SYS) $(FILES) -lcurses
+clobber: clean
+	rm -f vms-empire vms-empire-*.tar*
+
+# Validate
 
 spellcheck:
 	@spellcheck vms-empire.xml
@@ -95,46 +105,49 @@ spellcheck:
 cppcheck:
 	@cppcheck --quiet --inline-suppr --suppress=missingIncludeSystem --suppress=unusedFunction --template=gcc --enable=all --force *.[ch]
 
+reflow:
+	@clang-format --style="{IndentWidth: 8, UseTab: ForIndentation}" -i $$(find . -name "*.[ch]")
+
+SOURCES = README.adoc HACKING NEWS control empire.6 vms-empire.xml COPYING Makefile BUGS AUTHORS $(FILES) $(HEADERS) vms-empire.png vms-empire.desktop
+
+# Install/uninstall
+
 install: empire.6 uninstall
-	install -m 0755 -d $(DESTDIR)/usr/bin
-	install -m 0755 -d $(DESTDIR)/usr/share/man/man6
+	install -m 0755 -d $(DESTDIR)$(BINDIR)
+	install -m 0755 -d $(DESTDIR)$(MANDIR)/man6
 	install -m 0755 -d $(DESTDIR)/usr/share/applications/
 	install -m 0755 -d $(DESTDIR)/usr/share/icons/hicolor/48x48/apps/
 	install -m 0755 -d $(DESTDIR)/usr/share/appdata
-	install -m 0755 vms-empire $(DESTDIR)/usr/bin/
-	install -m 0644 empire.6 $(DESTDIR)/usr/share/man/man6/vms-empire.6
+	install -m 0755 vms-empire $(DESTDIR)$(BINDIR)/
+	install -m 0644 empire.6 $(DESTDIR)$(MANDIR)/man6/vms-empire.6
 	install -m 0644 vms-empire.desktop $(DESTDIR)/usr/share/applications/
 	install -m 0644 vms-empire.png $(DESTDIR)/usr/share/icons/hicolor/48x48/apps/
 	install -m 0644 vms-empire.xml $(DESTDIR)/usr/share/appdata/
 
 uninstall:
-	rm -f /usr/bin/vms-empire /usr/share/man/man6/vms-empire.6
+	rm -f $(BINDIR)/vms-empire $(MANDIR)/man6/vms-empire.6
 	rm -f /usr/share/applications/vms-empire.desktop
 	rm -f /usr/share/icons/hicolor/48x48/apps/vms-empire.png
 	rm -f /usr/share/appdata/vms-empire.xml
 
-clean:
-	rm -f *.o TAGS vms-empire
-	rm -f *.6 *.html
+# Export
 
-reflow:
-	@clang-format --style="{IndentWidth: 8, UseTab: ForIndentation}" -i $$(find . -name "*.[ch]")
+version:
+	@echo $(VERSION)
 
-clobber: clean
-	rm -f vms-empire vms-empire-*.tar*
+vms-empire-$(VERSION).tar.gz: $(SOURCES)
+	mkdir vms-empire-$(VERSION)
+	cp -r $(SOURCES) vms-empire-$(VERSION)
+	tar -czf vms-empire-$(VERSION).tar.gz vms-empire-$(VERSION)
+	rm -fr vms-empire-$(VERSION)
+	ls -l vms-empire-$(VERSION).tar.gz
 
-SOURCES = README.adoc HACKING NEWS control empire.6 vms-empire.xml COPYING Makefile BUGS AUTHORS $(FILES) $(HEADERS) vms-empire.png vms-empire.desktop
+dist: vms-empire-$(VERSION).tar.gz
 
-vms-empire-$(VERS).tar.gz: $(SOURCES)
-	@ls $(SOURCES) | sed s:^:vms-empire-$(VERS)/: >MANIFEST
-	@(cd ..; ln -s vms-empire vms-empire-$(VERS))
-	(cd ..; tar -czf vms-empire/vms-empire-$(VERS).tar.gz `cat vms-empire/MANIFEST`)
-	@(cd ..; rm vms-empire-$(VERS))
-
-dist: vms-empire-$(VERS).tar.gz
-
-release: vms-empire-$(VERS).tar.gz vms-empire.html
-	shipper version=$(VERS) | sh -e -x
+release: vms-empire-$(VERSION).tar.gz vms-empire.html
+	shipper version=$(VERSION) | sh -e -x
 
 refresh: vms-empire.html
-	shipper -N -w version=$(VERS) | sh -e -x
+	shipper -N -w version=$(VERSION) | sh -e -x
+
+# end
