@@ -182,12 +182,12 @@ beginning of a game.
 #define INFINITY 10000000 /* a large number */
 
 typedef struct piece_attr {
-	char sname;        /* eg 'C' */
-	char name[20];     /* eg "aircraft carrier" */
-	char nickname[20]; /* eg "carrier" */
-	char article[20];  /* eg "an aircraft carrier" */
-	char plural[20];   /* eg "aircraft carriers" */
-	char terrain[4];   /* terrain piece can pass over eg "." */
+	uchar sname;        /* eg 'C' */
+	uchar name[20];     /* eg "aircraft carrier" */
+	uchar nickname[20]; /* eg "carrier" */
+	uchar article[20];  /* eg "an aircraft carrier" */
+	uchar plural[20];   /* eg "aircraft carriers" */
+	uchar terrain[4];   /* terrain piece can pass over eg "." */
 	uchar build_time;  /* time needed to build unit */
 	uchar strength;    /* attack strength */
 	uchar max_hits;    /* number of hits when completely repaired */

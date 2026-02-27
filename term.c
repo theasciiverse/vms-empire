@@ -214,8 +214,8 @@ void get_strq(char *buf, int sizep) {
 Get a character from the user and convert it to uppercase.
 */
 
-char get_chx(void) {
-	char c;
+unsigned char get_chx(void) {
+	unsigned char c;
 
 	c = get_cq();
 
@@ -260,8 +260,8 @@ int getint(char *message) {
 Input a character from the user with echoing.
 */
 
-char get_c(void) {
-	char c; /* one char and a null */
+unsigned char get_c(void) {
+	unsigned char c; /* one char and a null */
 
 	(void)echo();
 	c = get_cq();
@@ -273,12 +273,12 @@ char get_c(void) {
 Input a character quietly.
 */
 
-char get_cq(void) {
+char unsigned get_cq(void) {
 	char c;
 
 	(void)crmode();
 	(void)refresh();
-	c = getch();
+	c = (unsigned char)getch();
 	topini(); /* clear information lines */
 	(void)nocrmode();
 	return (c);

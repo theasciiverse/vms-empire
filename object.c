@@ -430,7 +430,7 @@ bool good_loc(piece_info_t *obj, loc_t loc) {
 
 	vmap = MAP(obj->owner);
 
-	if (strchr(piece_attr[obj->type].terrain, vmap[loc].contents) != NULL)
+	if (strchr((char *)piece_attr[obj->type].terrain, vmap[loc].contents) != NULL)
 		return (true);
 
 	/* armies can move into unfull transports */

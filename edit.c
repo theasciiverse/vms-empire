@@ -10,12 +10,13 @@
 edit.c -- Routines to handle edit mode commands.
 */
 
-#include "empire.h"
-#include "extern.h"
 #include <ctype.h>
 #include <curses.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "empire.h"
+#include "extern.h"
 
 void e_move(loc_t *path_start, loc_t loc);
 extern int get_piece_name(void);
@@ -493,7 +494,7 @@ void e_piece_info(loc_t edit_cursor, char ab) {
 	int type;
 	char *p;
 
-	ab = toupper(ab);
+	ab = toupper((unsigned char)ab);
 	p = strchr(type_chars, ab);
 	type = p - type_chars;
 

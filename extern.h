@@ -147,10 +147,10 @@ void replay_movie(void);
 
 void get_str(char *buf, int sizep); /* input routines */
 void get_strq(char *buf, int sizep);
-char get_chx(void);
+unsigned char get_chx(void);
 int getint(char *message);
-char get_c(void);
-char get_cq(void);
+unsigned char get_c(void);
+unsigned char get_cq(void);
 bool getyn(char *message);
 int get_range(char *message, int low, int high);
 
