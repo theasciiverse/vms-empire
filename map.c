@@ -25,17 +25,17 @@ real maps, path_maps, and cont_maps.
 		b = x;                                                         \
 	}
 
-static void expand_perimeter(path_map_t *, view_map_t *, move_info_t *,
+static void expand_perimeter(path_map_t *, const view_map_t *, move_info_t *,
                              perimeter_t *, int, int, int, int, perimeter_t *,
                              perimeter_t *);
 static void expand_prune(view_map_t *, path_map_t *, loc_t, int, perimeter_t *,
                          int *);
-static int objective_cost(view_map_t *, move_info_t *, loc_t, int);
-static int terrain_type(path_map_t *, view_map_t *, move_info_t *, loc_t,
+static int objective_cost(const view_map_t *, move_info_t *, loc_t, int);
+static int terrain_type(path_map_t *, const view_map_t *, const move_info_t *, loc_t,
                         loc_t);
 static void start_perimeter(path_map_t *, perimeter_t *, loc_t, int);
 static void add_cell(path_map_t *, loc_t, perimeter_t *, int, int, int);
-static int vmap_count_path(path_map_t *, loc_t);
+static int vmap_count_path(const path_map_t *, loc_t);
 
 static perimeter_t p1; /* perimeter list for use as needed */
 static perimeter_t p2;
@@ -53,7 +53,7 @@ territory adjacent to the continent.  By adjusting the value of
 or lakes.
 */
 
-void vmap_cont(int *cont_map, view_map_t *vmap, loc_t loc, char bad_terrain) {
+void vmap_cont(int *cont_map, const view_map_t *vmap, loc_t loc, char bad_terrain) {
 	(void)memset((char *)cont_map, '\0', MAP_SIZE * sizeof(int));
 	vmap_mark_up_cont(cont_map, vmap, loc, bad_terrain);
 }
@@ -64,7 +64,7 @@ to the continent which are on the board.  Our passed location is
 known to be either on the continent or adjacent to the continent.
 */
 
-void vmap_mark_up_cont(int *cont_map, view_map_t *vmap, loc_t loc,
+void vmap_mark_up_cont(int *cont_map, const view_map_t *vmap, loc_t loc,
                        char bad_terrain) {
 	int i, j;
 	loc_t new_loc;
@@ -167,7 +167,7 @@ This could be done as we mark up the continent.
 		item += 1;                                                     \
 		break
 
-scan_counts_t vmap_cont_scan(int *cont_map, view_map_t *vmap) {
+scan_counts_t vmap_cont_scan(const int *cont_map, const view_map_t *vmap) {
 	scan_counts_t counts;
 	count_t i;
 
@@ -222,7 +222,7 @@ Scan a real map as above.  Only the 'size' and 'unowned_cities'
 fields are valid.
 */
 
-scan_counts_t rmap_cont_scan(int *cont_map) {
+scan_counts_t rmap_cont_scan(const int *cont_map) {
 	scan_counts_t counts;
 	count_t i;
 
@@ -530,7 +530,7 @@ We set the cost to reach the current perimeter.
 */
 
 static void
-expand_perimeter(path_map_t *pmap, view_map_t *vmap, move_info_t *move_info,
+expand_perimeter(path_map_t *pmap, const view_map_t *vmap, move_info_t *move_info,
                  perimeter_t *curp, int type, int cur_cost, int inc_wcost,
                  int inc_lcost, perimeter_t *waterp, perimeter_t *landp)
 /* pmap = path map to up1date */
@@ -597,11 +597,8 @@ static void add_cell(path_map_t *pmap, loc_t new_loc, perimeter_t *perim,
 
 	ASSERT(pm != NULL);
 
-	// cppcheck-suppress nullPointerRedundantCheck
 	pm->terrain = terrain;
-	// cppcheck-suppress nullPointerRedundantCheck
 	pm->inc_cost = inc_cost;
-	// cppcheck-suppress nullPointerRedundantCheck
 	pm->cost = cur_cost + inc_cost;
 
 	ASSERT(perim != NULL);
@@ -614,11 +611,11 @@ static void add_cell(path_map_t *pmap, loc_t new_loc, perimeter_t *perim,
 
 /* Compute the cost to move to an objective. */
 
-static int objective_cost(view_map_t *vmap, move_info_t *move_info, loc_t loc,
+static int objective_cost(const view_map_t *vmap, move_info_t *move_info, loc_t loc,
                           int base_cost) {
-	char *p;
+	const char *p;
 	int w;
-	city_info_t *cityp;
+	const city_info_t *cityp;
 
 	p = strchr(move_info->objectives, vmap[loc].contents);
 	if (!p) {
@@ -659,8 +656,8 @@ static int objective_cost(view_map_t *vmap, move_info_t *move_info, loc_t loc,
 Return the type of terrain at a vmap location.
 */
 
-static int terrain_type(path_map_t *pmap, view_map_t *vmap,
-                        move_info_t *move_info, loc_t from_loc, loc_t to_loc) {
+static int terrain_type(path_map_t *pmap, const view_map_t *vmap,
+                        const move_info_t *move_info, loc_t from_loc, loc_t to_loc) {
 	if (vmap[to_loc].contents == MAP_LAND) {
 		return T_LAND;
 	}
@@ -1081,11 +1078,11 @@ static int order[] = {NORTHWEST, NORTHEAST, SOUTHWEST, SOUTHEAST,
                       WEST,      EAST,      NORTH,     SOUTH};
 
 loc_t vmap_find_dir(path_map_t path_map[], view_map_t *vmap, loc_t loc,
-                    char *terrain, char *adj_char) {
+                    const char *terrain, const char *adj_char) {
 	int i, count, bestcount;
 	loc_t bestloc;
 	int path_count, bestpath;
-	char *p;
+	const char *p;
 
 	if (game.trace_pmap) {
 		print_pzoom("Before vmap_find_dir:", path_map, vmap);
@@ -1126,10 +1123,10 @@ Squares are weighted so that the first in the list
 is the most interesting.
 */
 
-int vmap_count_adjacent(view_map_t *vmap, loc_t loc, char *adj_char) {
+int vmap_count_adjacent(const view_map_t *vmap, loc_t loc, const char *adj_char) {
 	int i, count;
 	loc_t new_loc;
-	char *p;
+	const char *p;
 	int len;
 
 	len = strlen(adj_char);
@@ -1149,7 +1146,7 @@ int vmap_count_adjacent(view_map_t *vmap, loc_t loc, char *adj_char) {
    Count the number of adjacent cells that are on the path.
  */
 
-int vmap_count_path(path_map_t *pmap, loc_t loc) {
+int vmap_count_path(const path_map_t *pmap, loc_t loc) {
 	int i, count;
 	loc_t new_loc;
 
@@ -1179,7 +1176,7 @@ bool rmap_shore(loc_t loc) {
 	return (false);
 }
 
-bool vmap_shore(view_map_t *vmap, loc_t loc) {
+bool vmap_shore(const view_map_t *vmap, loc_t loc) {
 	loc_t i, j;
 
 	FOR_ADJ_ON(loc, j, i)
@@ -1196,7 +1193,7 @@ Return true if a location is surrounded by ocean.  Off board locations
 which cannot be moved to are treated as ocean.
 */
 
-bool vmap_at_sea(view_map_t *vmap, loc_t loc) {
+bool vmap_at_sea(const view_map_t *vmap, loc_t loc) {
 	loc_t i, j;
 
 	if (game.real_map[loc].contents != MAP_SEA) {

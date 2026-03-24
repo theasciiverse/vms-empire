@@ -568,7 +568,6 @@ void print_pzoom_cell(path_map_t *pmap, view_map_t *vmap, int row, int col,
 			d += 1;
 		}
 	}
-	// cppcheck-suppress zerodiv
 	sum /= d;
 
 	if (pmap[row_col_loc(row, col)].terrain == T_PATH)
@@ -720,7 +719,7 @@ Print a single cell in condensed format.
 
 extern char zoom_list[];
 
-void print_movie_cell(char *mbuf, int row, int col, int row_inc, int col_inc) {
+void print_movie_cell(const char *mbuf, int row, int col, int row_inc, int col_inc) {
 	int r, c;
 	char cell;
 

@@ -312,7 +312,7 @@ void e_stasis(loc_t loc) {
 		huh();
 	} else {
 		char e = get_chx(); /* get a direction */
-		char *p = strchr(dirs, e);
+		const char *p = strchr(dirs, e);
 
 		if (p == NULL) {
 			huh();
@@ -324,7 +324,7 @@ void e_stasis(loc_t loc) {
 
 void e_city_stasis(city_info_t *cityp, int type) {
 	char e;
-	char *p;
+	const char *p;
 
 	e = get_chx(); /* get a direction */
 	p = strchr(dirs, e);
@@ -492,7 +492,7 @@ Print info about a piece.
 void e_piece_info(loc_t edit_cursor, char ab) {
 	piece_info_t *obj;
 	int type;
-	char *p;
+	const char *p;
 
 	ab = toupper((unsigned char)ab);
 	p = strchr(type_chars, ab);
@@ -508,7 +508,7 @@ Display info on a city.
 */
 
 void e_city_info(loc_t edit_cursor) {
-	piece_info_t *obj;
+	const piece_info_t *obj;
 	city_info_t *cityp;
 	int f, s;
 	char func_buf[STRSIZE];

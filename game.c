@@ -23,8 +23,8 @@ bool select_cities(void);
 bool find_next(loc_t *mapi);
 bool good_cont(loc_t mapi);
 bool xread(FILE *f, char *buf, unsigned int size);
-bool xwrite(FILE *f, char *buf, unsigned int size);
-void stat_display(char *mbuf, int round);
+bool xwrite(FILE *f, const char *buf, unsigned int size);
+void stat_display(const char *mbuf, int round);
 
 /*
 Initialize a new game.  Here we generate a new random map, put cities
@@ -748,7 +748,7 @@ void save_game(void) {
 	}
 
 	for (i = 0; i < LIST_SIZE; i++) {
-		piece_info_t *obj = &game.object[i];
+		const piece_info_t *obj = &game.object[i];
 		S_WI32(obj->owner);
 		S_WI32(obj->type);
 		S_WI32(obj->loc);
@@ -1039,7 +1039,7 @@ Write a buffer to a file.  If we cannot write everything, return false.
 Also, tell the user why the write did not work if it didn't.
 */
 
-bool xwrite(FILE *f, char *buf, unsigned int size) {
+bool xwrite(FILE *f, const char *buf, unsigned int size) {
 	size_t bytes;
 
 	bytes = fwrite(buf, 1, size, f);
@@ -1088,7 +1088,7 @@ static char mapbuf[MAP_SIZE];
 void save_movie_screen(void) {
 	FILE *f; /* file to save game in */
 	count_t i;
-	piece_info_t *p;
+	const piece_info_t *p;
 
 	f = fopen("empmovie.dat", "ab"); /* open for append */
 	if (f == NULL) {
@@ -1121,7 +1121,7 @@ print it using a zoomed display.
 */
 
 void replay_movie(void) {
-	void print_movie_cell(char *, int, int, int, int);
+	void print_movie_cell(const char *, int, int, int, int);
 
 	FILE *f; /* file to save game in */
 	int r, c;
@@ -1175,7 +1175,7 @@ The "xxxxx" field is the cumulative cost of building the hardware.
 /* in declared order, with city first */
 static char *pieces = "OAFPDSTCBZXafpdstcbz";
 
-void stat_display(char *mbuf, int round) {
+void stat_display(const char *mbuf, int round) {
 	count_t i;
 	int counts[2 * NUM_OBJECTS + 2];
 	int user_cost, comp_cost;
@@ -1183,7 +1183,7 @@ void stat_display(char *mbuf, int round) {
 	(void)memset((char *)counts, '\0', sizeof(counts));
 
 	for (i = 0; i < MAP_SIZE; i++) {
-		char *p = strchr(pieces, mbuf[i]);
+		const char *p = strchr(pieces, mbuf[i]);
 		if (p) {
 			counts[p - pieces] += 1;
 		}

@@ -103,7 +103,7 @@ spellcheck:
 
 # This should run clean
 cppcheck:
-	@cppcheck --quiet --inline-suppr --suppress=missingIncludeSystem --suppress=unusedFunction --template=gcc --enable=all --force *.[ch]
+	TERM=dumb cppcheck --template=gcc --quiet --inline-suppr --suppress=checkersReport --suppress=missingIncludeSystem --suppress=unusedFunction --template=gcc --enable=all --force *.[ch]
 
 reflow:
 	@clang-format --style="{IndentWidth: 8, UseTab: ForIndentation}" -i $$(find . -name "*.[ch]")

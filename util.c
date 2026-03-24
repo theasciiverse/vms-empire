@@ -120,7 +120,7 @@ void check(void) {
 	void check_obj_cargo(piece_info_t **);
 
 	long i, j;
-	piece_info_t *p;
+	const piece_info_t *p;
 
 	/* nothing in any list yet */
 	for (i = 0; i < LIST_SIZE; i++) {
@@ -212,10 +212,9 @@ Check object lists.  We look for:
 4)  Invalid owners.
 */
 
-// cppcheck-suppress constParameter
 void check_obj(piece_info_t **list, int owner) {
 	long i, j;
-	piece_info_t *p;
+	const piece_info_t *p;
 
 	for (i = 0; i < NUM_OBJECTS; i++) {
 		for (p = list[i]; p != NULL; p = p->piece_link.next) {
@@ -256,7 +255,8 @@ Check for:
 */
 
 void check_cargo(piece_info_t *list, int cargo_type) {
-	piece_info_t *p, *q;
+	const piece_info_t *p;
+	const piece_info_t *q;
 	long j;
 
 	for (p = list; p != NULL; p = p->piece_link.next) {
@@ -288,9 +288,8 @@ pointer appears in a cargo list.  We assume object and cargo
 lists are valid.
 */
 
-// cppcheck-suppress constParameter
 void check_obj_cargo(piece_info_t **list) {
-	piece_info_t *p;
+	const piece_info_t *p;
 	long i;
 
 	for (i = 0; i < NUM_OBJECTS; i++) {

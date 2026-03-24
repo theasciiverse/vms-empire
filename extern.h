@@ -82,12 +82,12 @@ void user_move(void);
 void edit(long edit_cursor);
 
 /* map routines */
-void vmap_cont(int *cont_map, view_map_t *vmap, long loc, char bad_terrain);
+void vmap_cont(int *cont_map, const view_map_t *vmap, long loc, char bad_terrain);
 void rmap_cont(int *cont_map, long loc, char bad_terrain);
-void vmap_mark_up_cont(int *cont_map, view_map_t *vmap, long loc,
+void vmap_mark_up_cont(int *cont_map, const view_map_t *vmap, long loc,
                        char bad_terrain);
-scan_counts_t vmap_cont_scan(int *cont_map, view_map_t *vmap);
-scan_counts_t rmap_cont_scan(int *cont_map);
+scan_counts_t vmap_cont_scan(const int *cont_map, const view_map_t *vmap);
+scan_counts_t rmap_cont_scan(const int *cont_map);
 bool map_cont_edge(const int *cont_map, long loc);
 long vmap_find_aobj(path_map_t path_map[], view_map_t *vmap, long loc,
                     move_info_t *move_info);
@@ -106,11 +106,11 @@ void vmap_mark_path(path_map_t *path_map, view_map_t *vmap, long dest);
 void vmap_mark_adjacent(path_map_t path_map[], long loc);
 void vmap_mark_near_path(path_map_t path_map[], long loc);
 long vmap_find_dir(path_map_t path_map[], view_map_t *vmap, long loc,
-                   char *terrain, char *adjchar);
-int vmap_count_adjacent(view_map_t *vmap, long loc, char *adj_char);
-bool vmap_shore(view_map_t *vmap, long loc);
+                   const char *terrain, const char *adjchar);
+int vmap_count_adjacent(const view_map_t *vmap, long loc, const char *adj_char);
+bool vmap_shore(const view_map_t *vmap, long loc);
 bool rmap_shore(long loc);
-bool vmap_at_sea(view_map_t *vmap, long loc);
+bool vmap_at_sea(const view_map_t *vmap, long loc);
 bool rmap_at_sea(long loc);
 
 /* display routines */
@@ -165,14 +165,14 @@ piece_info_t *find_obj(int type, long loc);
 piece_info_t *find_nfull(int type, long loc);
 long find_transport(int owner, long loc);
 piece_info_t *find_obj_at_loc(long loc);
-int obj_moves(piece_info_t *obj);
-int obj_capacity(piece_info_t *obj);
+int obj_moves(const piece_info_t *obj);
+int obj_capacity(const piece_info_t *obj);
 void kill_obj(piece_info_t *obj, long loc);
 void kill_city(city_info_t *cityp);
 void produce(city_info_t *cityp);
 void move_obj(piece_info_t *obj, long new_loc);
 void move_sat(piece_info_t *obj);
-bool good_loc(piece_info_t *obj, long loc);
+bool good_loc(const piece_info_t *obj, long loc);
 void embark(piece_info_t *ship, piece_info_t *obj);
 void disembark(piece_info_t *obj);
 void describe_obj(piece_info_t *obj);

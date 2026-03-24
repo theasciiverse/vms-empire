@@ -59,7 +59,7 @@ at a fraction of their normal speed.  An object which has lost
 half of its hits moves at half-speed, for example.
 */
 
-int obj_moves(piece_info_t *obj) {
+int obj_moves(const piece_info_t *obj) {
 	return (piece_attr[obj->type].speed * obj->hits +
 	        piece_attr[obj->type].max_hits - 1) /* round up */
 	       / piece_attr[obj->type].max_hits;
@@ -69,7 +69,7 @@ int obj_moves(piece_info_t *obj) {
 Figure out the capacity for an object.
 */
 
-int obj_capacity(piece_info_t *obj) {
+int obj_capacity(const piece_info_t *obj) {
 	return (piece_attr[obj->type].capacity * obj->hits +
 	        piece_attr[obj->type].max_hits - 1) /* round up */
 	       / piece_attr[obj->type].max_hits;
@@ -115,7 +115,7 @@ loc_t find_transport(int owner, loc_t loc) {
 
 	for (i = 0; i < 8; i++) { /* look around */
 		loc_t new_loc = loc + dir_offset[i];
-		piece_info_t *t = find_nfull(TRANSPORT, new_loc);
+		const piece_info_t *t = find_nfull(TRANSPORT, new_loc);
 		if (t != NULL && t->owner == owner)
 			return (new_loc);
 	}
@@ -421,9 +421,9 @@ terrain type for the location.  Boats may move into port, armies may
 move onto transports, and fighters may move onto cities or carriers.
 */
 
-bool good_loc(piece_info_t *obj, loc_t loc) {
-	view_map_t *vmap;
-	piece_info_t *p;
+bool good_loc(const piece_info_t *obj, loc_t loc) {
+	const view_map_t *vmap;
+	const piece_info_t *p;
 
 	if (!game.real_map[loc].on_board)
 		return (false);
@@ -555,7 +555,7 @@ void update(view_map_t vmap[], loc_t loc) {
 		vmap[loc].contents = city_char[game.real_map[loc].cityp->owner];
 
 	else {
-		piece_info_t *p = find_obj_at_loc(loc);
+		const piece_info_t *p = find_obj_at_loc(loc);
 
 		if (p == NULL) /* nothing here? */
 			vmap[loc].contents = game.real_map[loc].contents;

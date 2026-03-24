@@ -285,7 +285,7 @@ territory.
 void move_explore(piece_info_t *obj) {
 	path_map_t path_map[MAP_SIZE];
 	loc_t loc;
-	char *terrain;
+	const char *terrain;
 
 	switch (obj->type) {
 	case ARMY:
@@ -466,7 +466,7 @@ The nearest landing field must be within the object's range.
 void move_land(piece_info_t *obj) {
 	long best_dist;
 	loc_t best_loc;
-	piece_info_t *p;
+	const piece_info_t *p;
 
 	best_dist = find_nearest_city(obj->loc, USER, &best_loc);
 
@@ -532,7 +532,7 @@ move.
 void move_to_dest(piece_info_t *obj, loc_t dest) {
 	path_map_t path_map[MAP_SIZE];
 	int fterrain;
-	char *mterrain;
+	const char *mterrain;
 	loc_t new_loc;
 
 	switch (obj->type) {
@@ -572,12 +572,12 @@ Ask the user to move her piece.
 void ask_user(piece_info_t *obj) {
 	void user_skip(piece_info_t *), user_fill(piece_info_t *);
 	void user_dir(piece_info_t *, int), user_set_dir(piece_info_t *);
-	void user_wake(piece_info_t *), user_set_city_func(piece_info_t *);
+	void user_wake(piece_info_t *), user_set_city_func(const piece_info_t *);
 	void user_cancel_auto(void), user_redraw(void);
 	void user_random(piece_info_t *), user_land(piece_info_t *);
 	void user_sentry(piece_info_t *), user_help(void);
 	void reset_func(piece_info_t *), user_explore(piece_info_t *);
-	void user_build(piece_info_t *), user_transport(piece_info_t *);
+	void user_build(const piece_info_t *), user_transport(piece_info_t *);
 	void user_armyattack(piece_info_t *), user_repair(piece_info_t *);
 
 	for (;;) {
@@ -853,7 +853,7 @@ void user_repair(piece_info_t *obj) {
 Set a city's function.
 */
 
-void user_set_city_func(piece_info_t *obj) {
+void user_set_city_func(const piece_info_t *obj) {
 	void e_city_fill(city_info_t *, int);
 	void e_city_explore(city_info_t *, int);
 	void e_city_stasis(city_info_t *, int);
@@ -912,7 +912,7 @@ void user_set_city_func(piece_info_t *obj) {
 Change a city's production.
 */
 
-void user_build(piece_info_t *obj) {
+void user_build(const piece_info_t *obj) {
 	city_info_t *cityp;
 
 	if (game.user_map[obj->loc].contents != 'O') { /* no user city here? */
@@ -1134,7 +1134,7 @@ if she really wants to attack the city.
 */
 
 void move_army_to_city(piece_info_t *obj, loc_t city_loc) {
-	piece_info_t *tt;
+	const piece_info_t *tt;
 
 	tt = find_nfull(TRANSPORT, city_loc);
 
