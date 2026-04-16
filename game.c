@@ -1107,7 +1107,7 @@ void save_movie_screen(void) {
 			} else if (p->owner == USER) {
 				mapbuf[i] = piece_attr[p->type].sname;
 			} else {
-				mapbuf[i] = tolower(piece_attr[p->type].sname);
+				mapbuf[i] = tolower((unsigned char)piece_attr[p->type].sname);
 			}
 		}
 	}

@@ -148,7 +148,7 @@ char e_cursor(loc_t *edit_cursor) {
 		e = getch();
 	}
 	(void)nocrmode(); /* reset terminal */
-	return toupper(e);
+	return toupper((unsigned char)e);
 }
 
 /*
@@ -306,7 +306,7 @@ Set object to move in a direction.
 static char dirs[] = "WEDCXZAQ";
 
 void e_stasis(loc_t loc) {
-	if (!isupper(game.user_map[loc].contents)) {
+	if (!isupper((unsigned char)game.user_map[loc].contents)) {
 		huh(); /* no object here */
 	} else if (game.user_map[loc].contents == 'X') {
 		huh();
@@ -422,7 +422,7 @@ Beginning of move to location.
 */
 
 void e_move(loc_t *path_start, loc_t loc) {
-	if (!isupper(game.user_map[loc].contents)) {
+	if (!isupper((unsigned char)game.user_map[loc].contents)) {
 		huh(); /* nothing there? */
 	} else if (game.user_map[loc].contents == 'X') {
 		huh(); /* enemy city? */

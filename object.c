@@ -562,7 +562,7 @@ void update(view_map_t vmap[], loc_t loc) {
 		else if (p->owner == USER)
 			vmap[loc].contents = piece_attr[p->type].sname;
 		else
-			vmap[loc].contents = tolower(piece_attr[p->type].sname);
+			vmap[loc].contents = tolower((unsigned char)piece_attr[p->type].sname);
 	}
 	if (vmap == game.comp_map)
 		display_locx(COMP, game.comp_map, loc);
