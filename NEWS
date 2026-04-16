@@ -1,6 +1,6 @@
 			vms-empire news
 
-Repository head::
+1.20: 2026-04-16::
        More code hardening.
        Fix for ancient bug: enemy satellites no longer awaken your pieces.
 
