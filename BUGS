@@ -25,8 +25,8 @@ this bug still exists.
 3)  Satellites are not completely implemented.  When the user
 moves to a satellite, it should be allowed.  The user should
 not be asked if she "really wants to attack her own piece".
-Enemy satelites should not cause the user's pieces to be
-awoken, since there is nothing the user can do.
+(ESR: I have fixed the ancient bug about enemy satellites
+awakening pieces.)
 
 4)  If the computer has a damaged ship and is returning it to
 port, the user can block the ship with another piece.  The computer

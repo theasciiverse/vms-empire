@@ -1197,9 +1197,12 @@ bool awake(piece_info_t *obj) {
 		return (true);
 	}
 	for (i = 0; i < 8; i++) { /* for each surrounding cell */
-		char c = game.user_map[obj->loc + dir_offset[i]].contents;
+		loc_t loc = obj->loc + dir_offset[i];
+		char c = game.user_map[loc].contents;
+		const piece_info_t *enemy = find_obj_at_loc(loc);
 
-		if (islower(c) || c == MAP_CITY || c == 'X') {
+		if ((islower(c) && (enemy == NULL || enemy->type != SATELLITE)) ||
+		    c == MAP_CITY || c == 'X') {
 			if (obj->func < 0) {
 				obj->func = NOFUNC; /* awaken */
 			}

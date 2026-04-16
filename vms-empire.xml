@@ -1085,7 +1085,7 @@ a "movie".</para>
 
 <para>Satellites are not completely implemented.  You should be able to
 move to a square that contains a satellite, but the program won't
-let you.  Enemy satellites should not cause your pieces to awaken.</para>
+let you.</para>
 </refsect1>
 
 <refsect1 id='authors'><title>AUTHORS</title>
