@@ -606,4 +606,78 @@ while attempting to attack the enemy transport or while executing its
 function to move a in particular direction?)  but I have saved such a
 game, commented out this line, landed my transport (which has a
 computer army on board), and seen the computer army exit my
-transport.
+ transport.
+
+
+Empire 2025 feature gap summary
+-------------------------------
+
+Compared against the documentation in `unclebob/empire-2025`
+(`README.md` and `DOC.md`, checked 2026-04-16), that port documents
+several features this tree does not appear to have:
+
+1)  A graphical, mouse-driven interface rather than curses-only play.
+It supports click-to-move, clicking a distant cell to assign a
+destination, and mouse-oriented debug-region selection.
+
+2)  Variable map dimensions selected on the command line.  This code
+still has a fixed-size world and BUGS already notes that width and
+height should become parameters.
+
+3)  Extra runtime controls and instrumentation, including fixed random
+seeds, configurable opening handicap, headless runs, AI production
+caps, per-round unit logging, and automatic debug dumps.
+
+4)  Better standing-order support for newly built or transported
+units, including explicit marching orders, flight paths, and chained
+waypoints.
+
+5)  Real-time game controls such as pause/unpause, stepping forward by
+one round while paused, and an interactive load-game menu.
+
+6)  A substantially more comprehensive automated test suite and
+acceptance-test pipeline.
+
+7) Unit and status colors:
+
+  Cell colors (line 28-34):                                               
+                                                                          
+  ┌───────────────┬───────────────┬──────────────────────────────┐        
+  │   Cell type   │      RGB      │            Visual            │        
+  ├───────────────┼───────────────┼──────────────────────────────┤        
+  │ Player city   │ [0 255 0]     │ Green                        │     
+  ├───────────────┼───────────────┼──────────────────────────────┤
+  │ Computer city │ [255 0 0]     │ Red                          │        
+  ├───────────────┼───────────────┼──────────────────────────────┤
+  │ Free city     │ [255 255 255] │ White                        │        
+  ├───────────────┼───────────────┼──────────────────────────────┤        
+  │ Unexplored    │ [0 0 0]       │ Black                        │
+  ├───────────────┼───────────────┼──────────────────────────────┤        
+  │ Land          │ [139 69 19]   │ Brown (+ 8 country variants) │     
+  ├───────────────┼───────────────┼──────────────────────────────┤        
+  │ Sea           │ [0 191 255]   │ Deep sky blue                │
+  └───────────────┴───────────────┴──────────────────────────────┘        
+                                                                       
+  Unit colors by mode (line 48-51, 71-79):                                
+                                                                       
+  ┌──────────────────┬───────────────┬───────────────────────────────┐    
+  │       Mode       │      RGB      │            Visual             │ 
+  ├──────────────────┼───────────────┼───────────────────────────────┤
+  │ Awake            │ [255 255 255] │ White                         │
+  ├──────────────────┼───────────────┼───────────────────────────────┤
+  │ Sleeping         │ [0 0 0]       │ Black                         │    
+  ├──────────────────┼───────────────┼───────────────────────────────┤
+  │ Sentry           │ [255 128 128] │ Light red/salmon              │    
+  ├──────────────────┼───────────────┼───────────────────────────────┤    
+  │ Explore          │ [144 238 144] │ Light green                   │
+  ├──────────────────┼───────────────┼───────────────────────────────┤    
+  │ Coastline-follow │ [144 238 144] │ Light green (same as explore) │ 
+  └──────────────────┴───────────────┴───────────────────────────────┘    
+   
+  Special unit rules (unit->color, line 81-94):                           
+  - Computer armies are always white regardless of mode                
+  - Units with :loading mission are always black (sleeping color)         
+                                                                       
+  Other colors:                                                           
+  - Production overlay: [128 128 128] (gray)                           
+  - Waypoint overlay: [0 255 0] (green)
