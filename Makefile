@@ -10,8 +10,6 @@ BINDIR      ?= $(PREFIX)/bin
 DATADIR     ?= $(PREFIX)/share
 MANDIR      ?= $(DATADIR)/man
 
-VERSION=$(shell sed -n <NEWS '/^[0-9]/s/:.*//p' | head -1)
-
 # Use -g to compile the program for debugging.
 #DEBUG = -g -DDEBUG
 DEBUG = -O2
@@ -23,6 +21,8 @@ PROFILE =
 LIBS = -lncurses
 
 # You shouldn't have to modify anything below this line.
+
+VERSION=$(shell sed -n <NEWS '/^[0-9]/s/:.*//p' | head -1)
 
 # There's a dynamic format in the object-display routines; suppress the warning
 CFLAGS = $(DEBUG) $(PROFILE) -Wall -Wextra -Werror -Wno-format-security -Wno-unused-parameter
