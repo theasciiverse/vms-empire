@@ -22,7 +22,25 @@ LIBS = -lncurses
 
 # You shouldn't have to modify anything below this line.
 
-VERSION=$(shell sed -n <NEWS '/^[0-9]/s/:.*//p' | head -1)
+VERSION=$(shell sed -n <NEWS.adoc '/^[0-9]/s/:.*//p' | head -1)
+
+# Rules
+
+# Note: to suppress the footers with timestamps being generated in HTML,
+# we use "-a nofooter".
+# To debug asciidoc problems, you may need to run "xmllint --nonet --noout --valid"
+# on the intermediate XML that throws an error.
+.SUFFIXES: .html .adoc .1
+
+.adoc.1:
+	asciidoctor -D. -a nofooter -b manpage $<
+.adoc.html:
+	asciidoctor -D. -a nofooter -a webfonts! $<
+
+.PHONY: all clean cppcheck spellcheck reflow
+.PHONY: install uninstall version dist release refresh
+
+# Build
 
 # There's a dynamic format in the object-display routines; suppress the warning
 CFLAGS = $(DEBUG) $(PROFILE) -Wall -Wextra -Werror -Wno-format-security -Wno-unused-parameter
@@ -61,9 +79,7 @@ OFILES = \
 	usermove.o \
 	util.o
 
-# Build
-
-all: vms-empire
+all: vms-empire vms-empire.1
 
 vms-empire: $(OFILES)
 	$(CC) $(PROFILE) -o vms-empire $(OFILES) $(LIBS)
@@ -83,11 +99,6 @@ term.o:: extern.h empire.h
 usermove.o:: extern.h empire.h
 util.o:: extern.h empire.h
 
-empire.6: vms-empire.xml
-	xmlto man vms-empire.xml
-
-vms-empire.html: vms-empire.xml
-	xmlto html-nochunks vms-empire.xml
 
 clean:
 	rm -f *.o TAGS vms-empire
@@ -108,7 +119,7 @@ cppcheck:
 reflow:
 	@clang-format --style="{IndentWidth: 8, UseTab: ForIndentation}" -i $$(find . -name "*.[ch]")
 
-SOURCES = README.adoc HACKING NEWS control empire.6 vms-empire.xml COPYING Makefile BUGS AUTHORS $(FILES) $(HEADERS) vms-empire.png vms-empire.desktop
+SOURCES = README.adoc HACKING NEWS.adoc control empire.6 vms-empire.adoc COPYING Makefile BUGS AUTHORS $(FILES) $(HEADERS) vms-empire.png vms-empire.desktop
 
 # Install/uninstall
 

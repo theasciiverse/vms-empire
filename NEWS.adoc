@@ -1,4 +1,7 @@
-			vms-empire news
+= vms-empire news
+
+Repository head::
+      Yet more code hardening.
 
 1.20: 2026-04-16::
        More code hardening.
