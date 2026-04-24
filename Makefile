@@ -110,7 +110,7 @@ clobber: clean
 # Validate
 
 spellcheck:
-	@spellcheck vms-empire.xml
+	@spellcheck vms-empire.adoc
 
 # This should run clean
 cppcheck:
@@ -124,22 +124,22 @@ SOURCES = README.adoc HACKING NEWS.adoc control empire.6 vms-empire.adoc COPYING
 # Install/uninstall
 
 install: empire.6 uninstall
-	install -m 0755 -d $(DESTDIR)$(BINDIR)
-	install -m 0755 -d $(DESTDIR)$(MANDIR)/man6
-	install -m 0755 -d $(DESTDIR)/usr/share/applications/
-	install -m 0755 -d $(DESTDIR)/usr/share/icons/hicolor/48x48/apps/
-	install -m 0755 -d $(DESTDIR)/usr/share/appdata
-	install -m 0755 vms-empire $(DESTDIR)$(BINDIR)/
-	install -m 0644 empire.6 $(DESTDIR)$(MANDIR)/man6/vms-empire.6
-	install -m 0644 vms-empire.desktop $(DESTDIR)/usr/share/applications/
-	install -m 0644 vms-empire.png $(DESTDIR)/usr/share/icons/hicolor/48x48/apps/
-	install -m 0644 vms-empire.xml $(DESTDIR)/usr/share/appdata/
+	install -m 0755 -d $(BINDIR)
+	install -m 0755 -d $(PREFIX)$(MANDIR)/man6
+	install -m 0755 -d $(PREFIX)/share/applications/
+	install -m 0755 -d $(PREFIX)/share/icons/hicolor/48x48/apps/
+	install -m 0755 -d $(PREFIX)/share/appdata
+	install -m 0755 vms-empire $(BINDIR)/
+	install -m 0644 empire.6 $(MANDIR)/man6/vms-empire.6
+	install -m 0644 vms-empire.desktop $(PREFIX)/share/applications/
+	install -m 0644 vms-empire.png $(PREFIX)/share/icons/hicolor/48x48/apps/
+	install -m 0644 vms-empire.adoc $(PREFIX)/share/appdata/
 
 uninstall:
 	rm -f $(BINDIR)/vms-empire $(MANDIR)/man6/vms-empire.6
-	rm -f /usr/share/applications/vms-empire.desktop
-	rm -f /usr/share/icons/hicolor/48x48/apps/vms-empire.png
-	rm -f /usr/share/appdata/vms-empire.xml
+	rm -f $(PREFIX)/share/applications/vms-empire.desktop
+	rm -f $(PREFIX)/share/icons/hicolor/48x48/apps/vms-empire.png
+	rm -f $(PREFIX)/share/appdata/vms-empire.adoc
 
 # Export
 
