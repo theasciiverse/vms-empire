@@ -350,6 +350,9 @@ void move_armyload(piece_info_t *obj) {
 	view_map_t amap[MAP_SIZE];
 	loc_t loc;
 	piece_info_t *p;
+	static move_info_t user_army_load = {
+		USER, "$", {1}
+	};
 
 	ABORT;
 
@@ -360,7 +363,9 @@ void move_armyload(piece_info_t *obj) {
 		move_obj(obj, loc);
 		obj->func = NOFUNC;
 	} else { /* look for nearest non-full transport */
+		path_map_t path_map[MAP_SIZE];
 		int i;
+
 		(void)memcpy(amap, game.user_map,
 		             sizeof(view_map_t) * MAP_SIZE);
 
@@ -375,6 +380,17 @@ void move_armyload(piece_info_t *obj) {
 			if (game.city[i].owner == USER &&
 			    game.city[i].prod == TRANSPORT) {
 				amap[game.city[i].loc].contents = '$';
+			}
+		}
+
+		loc = vmap_find_lwobj(path_map, amap, obj->loc,
+		                      &user_army_load, INFINITY);
+		if (loc != obj->loc) {
+			vmap_mark_path(path_map, amap, loc);
+			loc = vmap_find_dir(path_map, amap, obj->loc,
+			                    "+", "$.");
+			if (loc != obj->loc) {
+				move_obj(obj, loc);
 			}
 		}
 	}
