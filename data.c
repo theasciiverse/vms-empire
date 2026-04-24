@@ -73,14 +73,7 @@ piece_attr_t piece_attr[] = {
 
 /* Direction offsets. */
 
-int dir_offset [] = {-MAP_WIDTH, /* north */
-		     -MAP_WIDTH+1, /* northeast */
-		     1, /* east */
-		     MAP_WIDTH+1, /* southeast */
-		     MAP_WIDTH, /* south */
-		     MAP_WIDTH-1, /* southwest */
-		     -1, /* west */
-		     -MAP_WIDTH-1}; /* northwest */
+int dir_offset[8];
 
 /* Names of movement functions. */
 

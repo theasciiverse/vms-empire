@@ -58,11 +58,7 @@ functions for cities.
 Code Cleanup
 ------------
 
-1) The width and height of the map should be parameters to the
-program. Storage for the various data structures should be allocated
-dynamically instead of being stored in static tables.
-
-2)  Interrupts should be caught.  When an interrupt is received,
+Interrupts should be caught.  When an interrupt is received,
 the user should be asked if she really wants to quit, and she
 should be warned if the game will not be saved.
 

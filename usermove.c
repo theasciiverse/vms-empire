@@ -346,9 +346,8 @@ If there is an adjacent transport, move the army onto
 the transport, and awaken the army.
 */
 
-static view_map_t amap[MAP_SIZE];
-
 void move_armyload(piece_info_t *obj) {
+	view_map_t amap[MAP_SIZE];
 	loc_t loc;
 	piece_info_t *p;
 

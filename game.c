@@ -26,6 +26,48 @@ bool xread(FILE *f, char *buf, unsigned int size);
 bool xwrite(FILE *f, const char *buf, unsigned int size);
 void stat_display(const char *mbuf, int round);
 
+static int *height[2];
+static loc_t *land;
+static int *marked;
+static char *mapbuf;
+
+static void *xmalloc(size_t size) {
+	void *p = malloc(size);
+
+	if (p == NULL) {
+		perror("Cannot allocate map storage");
+		exit(1);
+	}
+	return p;
+}
+
+void configure_geometry(int width, int height_arg) {
+	game.map_width = width;
+	game.map_height = height_arg;
+	game.map_size = width * height_arg;
+	game.num_city = (100 * (width + height_arg)) / 228;
+
+	game.real_map = xmalloc(sizeof(real_map_t) * MAP_SIZE);
+	game.comp_map = xmalloc(sizeof(view_map_t) * MAP_SIZE);
+	game.user_map = xmalloc(sizeof(view_map_t) * MAP_SIZE);
+	game.city = xmalloc(sizeof(city_info_t) * NUM_CITY);
+
+	height[0] = xmalloc(sizeof(int) * (MAP_SIZE + 1));
+	height[1] = xmalloc(sizeof(int) * (MAP_SIZE + 1));
+	land = xmalloc(sizeof(loc_t) * MAP_SIZE);
+	marked = xmalloc(sizeof(int) * MAP_SIZE);
+	mapbuf = xmalloc(sizeof(char) * MAP_SIZE);
+
+	dir_offset[NORTH] = -MAP_WIDTH;
+	dir_offset[NORTHEAST] = -MAP_WIDTH + 1;
+	dir_offset[EAST] = 1;
+	dir_offset[SOUTHEAST] = MAP_WIDTH + 1;
+	dir_offset[SOUTH] = MAP_WIDTH;
+	dir_offset[SOUTHWEST] = MAP_WIDTH - 1;
+	dir_offset[WEST] = -1;
+	dir_offset[NORTHWEST] = -MAP_WIDTH - 1;
+}
+
 /*
 Initialize a new game.  Here we generate a new random map, put cities
 on the map, select cities for each opponent, and zero out the lists of
@@ -94,10 +136,6 @@ at program start up.
 
 #define MAX_HEIGHT 999 /* highest height */
 
-/* these arrays give some compilers problems when they are automatic */
-/* MAP_SIZE+1 to eleminate compiler warning. I think the loop is wrong
-   and goes 1 too high, but safer to just increase here */
-static int height[2][MAP_SIZE + 1];
 static int height_count[MAX_HEIGHT + 1];
 
 void make_map(void) {
@@ -177,9 +215,6 @@ on which a city may be placed.  We randomly choose elements from this
 list until all the cities are placed.  After each choice of a land cell
 for a city, we remove land cells which are too close to the city.
 */
-
-/* avoid compiler problems with large automatic arrays */
-static loc_t land[MAP_SIZE];
 
 void place_cities(void) {
 	count_t regen_land(count_t);
@@ -296,7 +331,7 @@ making sure the cities are not the same.
 typedef struct cont {                 /* a continent */
 	long value;                   /* value of continent */
 	int ncity;                    /* number of cities */
-	city_info_t *cityp[NUM_CITY]; /* pointer to city */
+	city_info_t *cityp[MAX_NUM_CITY]; /* pointer to city */
 } cont_t;
 
 typedef struct pair {
@@ -305,7 +340,6 @@ typedef struct pair {
 	int comp_cont; /* index to computer continent */
 } pair_t;
 
-static int marked[MAP_SIZE];      /* list of examine cells */
 static int ncont;                 /* number of continents */
 static cont_t cont_tab[MAX_CONT]; /* list of good continenets */
 static int rank_tab[MAX_CONT];    /* indices to cont_tab in order of rank */
@@ -849,15 +883,16 @@ int restore_game(void) {
 	R_RU32(list_size);
 	R_RU32(num_objects);
 
-	if (map_width != MAP_WIDTH || map_height != MAP_HEIGHT ||
-	    map_size != MAP_SIZE) {
+	if (map_width != (uint32_t)MAP_WIDTH ||
+	    map_height != (uint32_t)MAP_HEIGHT ||
+	    map_size != (uint32_t)MAP_SIZE) {
 		fprintf(stderr,
-		        "Saved file map is %ux%u (size %u); this build uses %dx%d (size %d).\n",
+		        "Saved file map is %ux%u (size %u); current geometry is %dx%d (size %d).\n",
 		        map_width, map_height, map_size, MAP_WIDTH, MAP_HEIGHT,
 		        MAP_SIZE);
 		goto restore_cleanup;
 	}
-	if (num_city != NUM_CITY || list_size != LIST_SIZE ||
+	if (num_city != (uint32_t)NUM_CITY || list_size != LIST_SIZE ||
 	    num_objects != NUM_OBJECTS) {
 		fprintf(stderr,
 		        "Saved file uses different limits (cities %u, objects %u, list %u).\n",
@@ -1083,7 +1118,6 @@ computer's screen.  This information is appended to 'empmovie.dat'.
 */
 
 extern char city_char[];
-static char mapbuf[MAP_SIZE];
 
 void save_movie_screen(void) {
 	FILE *f; /* file to save game in */

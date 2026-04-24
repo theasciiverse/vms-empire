@@ -15,6 +15,8 @@ real maps, path_maps, and cont_maps.
 
 #include "empire.h"
 #include "extern.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define SWAP(a, b)                                                             \
@@ -41,9 +43,26 @@ static perimeter_t p1; /* perimeter list for use as needed */
 static perimeter_t p2;
 static perimeter_t p3;
 static perimeter_t p4;
+static bool map_storage_done = false;
 
 static int best_cost; /* cost and location of best objective */
 static loc_t best_loc;
+
+static void map_storage_init(void) {
+	if (map_storage_done) {
+		return;
+	}
+	p1.list = malloc(sizeof(long) * MAP_SIZE);
+	p2.list = malloc(sizeof(long) * MAP_SIZE);
+	p3.list = malloc(sizeof(long) * MAP_SIZE);
+	p4.list = malloc(sizeof(long) * MAP_SIZE);
+	if (p1.list == NULL || p2.list == NULL || p3.list == NULL ||
+	    p4.list == NULL) {
+		perror("Cannot allocate map storage");
+		exit(1);
+	}
+	map_storage_done = true;
+}
 
 /*
 Map out a continent.  We are given a location on the continent.
@@ -54,6 +73,7 @@ or lakes.
 */
 
 void vmap_cont(int *cont_map, const view_map_t *vmap, loc_t loc, char bad_terrain) {
+	map_storage_init();
 	(void)memset((char *)cont_map, '\0', MAP_SIZE * sizeof(int));
 	vmap_mark_up_cont(cont_map, vmap, loc, bad_terrain);
 }
@@ -71,6 +91,7 @@ void vmap_mark_up_cont(int *cont_map, const view_map_t *vmap, loc_t loc,
 	char this_terrain;
 	perimeter_t *from, *to;
 
+	map_storage_init();
 	from = &p1;
 	to = &p2;
 
@@ -484,14 +505,20 @@ doing the initialization of the path map.  We now use an external
 constant and 'memcpy'.
 */
 
-static path_map_t pmap_init[MAP_SIZE];
+static path_map_t *pmap_init;
 static bool init_done = false;
 
 static void start_perimeter(path_map_t *pmap, perimeter_t *perim, loc_t loc,
                             int terrain) {
+	map_storage_init();
 	/* zap the path map */
 	if (!init_done) {
 		int i;
+		pmap_init = malloc(sizeof(path_map_t) * MAP_SIZE);
+		if (pmap_init == NULL) {
+			perror("Cannot allocate map storage");
+			exit(1);
+		}
 
 		init_done = true;
 		for (i = 0; i < MAP_SIZE; i++) {
@@ -500,7 +527,8 @@ static void start_perimeter(path_map_t *pmap, perimeter_t *perim, loc_t loc,
 			pmap_init[i].terrain = T_UNKNOWN;
 		}
 	}
-	(void)memcpy((char *)pmap, (char *)pmap_init, sizeof(pmap_init));
+	(void)memcpy((char *)pmap, (char *)pmap_init,
+	             sizeof(path_map_t) * MAP_SIZE);
 
 	/* put first location in perimeter */
 	pmap[loc].cost = 0;

@@ -8,7 +8,7 @@
 // spellcheck: add wargame savefile Automove automove Ctrl-L
 // spellcheck: add Caltech DEC's DECUS VMS Leres Amdahl savefile dest neh
 // spellcheck: add func VAY AFPT QWE ZXC Idir Vpiece Jdir
-// spellcheck: add Printsector sav empmovie
+// spellcheck: add Printsector sav empmovie WIDTHxHEIGHT
 
 
 == NAME
@@ -17,7 +17,7 @@ empire - the wargame of the century
 
 == SYNOPSIS
 
-*empire* [-w _water_] [-s _smooth_] [-d _delay_] [-S _save-interval_] [-f _savefile_]
+*empire* [-w _water_] [-s _smooth_] [-d _delay_] [-S _save-interval_] [-f _savefile_] [-g _WIDTHxHEIGHT_]
 
 == DESCRIPTION
 
@@ -41,6 +41,11 @@ rules that you do.
   printing informational messages at the top of the screen. _delay_ is
   specified in milliseconds. The default value is 2000 which allows the
   user two seconds to read a message.
+`-g` _WIDTHxHEIGHT_::
+  Set the map geometry. The default is 100x60. Width and height must each
+  be between 10 and 1000 inclusive, and the total map area cannot exceed
+  100000 cells. Saved games can only be restored with the same geometry
+  they were created with.
 
 == EXAMPLES
 

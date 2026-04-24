@@ -18,9 +18,33 @@ For each move the user wants us to make, we do the following:
 
 #include "empire.h"
 #include "extern.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-static view_map_t emap[MAP_SIZE]; /* pruned explore map */
+static view_map_t *emap;   /* pruned explore map */
+static view_map_t *amap;   /* temp view map */
+static path_map_t *path_map;
+static int *owncont_map;
+static int *tcont_map;
+static bool comp_storage_done = false;
+
+static void comp_storage_init(void) {
+	if (comp_storage_done) {
+		return;
+	}
+	emap = malloc(sizeof(view_map_t) * MAP_SIZE);
+	amap = malloc(sizeof(view_map_t) * MAP_SIZE);
+	path_map = malloc(sizeof(path_map_t) * MAP_SIZE);
+	owncont_map = malloc(sizeof(int) * MAP_SIZE);
+	tcont_map = malloc(sizeof(int) * MAP_SIZE);
+	if (emap == NULL || amap == NULL || path_map == NULL ||
+	    owncont_map == NULL || tcont_map == NULL) {
+		perror("Cannot allocate map storage");
+		exit(1);
+	}
+	comp_storage_done = true;
+}
 
 bool load_army(piece_info_t *obj);
 bool lake(loc_t loc);
@@ -39,6 +63,7 @@ void comp_move(int nmoves) {
 	int i;
 	const piece_info_t *obj;
 
+	comp_storage_init();
 	/* Update our view of the world. */
 
 	for (i = 0; i < NUM_OBJECTS; i++)
@@ -372,9 +397,6 @@ bool lake(loc_t loc) {
 Move all computer pieces.
 */
 
-static view_map_t amap[MAP_SIZE]; /* temp view map */
-static path_map_t path_map[MAP_SIZE];
-
 void do_pieces(void) {
 	void cpiece_move(piece_info_t *);
 
@@ -690,9 +712,6 @@ b)  if enemy_cities == 1 && total_cities == 1, set number to 2.
 
 c)  Any other attackable city is marked with a '0'.
 */
-
-static int owncont_map[MAP_SIZE];
-static int tcont_map[MAP_SIZE];
 
 void make_unload_map(view_map_t *xmap, const view_map_t *vmap) {
 	count_t i;

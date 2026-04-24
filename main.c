@@ -22,6 +22,8 @@ options:
 
     -S saveinterval: sets turn interval between saves.
                default is 10
+
+    -g geometry: map size as WIDTHxHEIGHT. Default is 100x60.
 */
 
 #include "empire.h"
@@ -30,7 +32,29 @@ options:
 #include <stdlib.h>
 #include <unistd.h>
 
-#define OPTFLAGS "w:s:d:S:f:"
+#define OPTFLAGS "w:s:d:S:f:g:"
+
+static int parse_geometry(const char *geometry, int *width, int *height) {
+	char *end;
+	long w, h;
+
+	w = strtol(geometry, &end, 10);
+	if ((*end != 'x' && *end != 'X') || end == geometry) {
+		return 0;
+	}
+	h = strtol(end + 1, &end, 10);
+	if (*end != '\0') {
+		return 0;
+	}
+	if (w < 10 || w > MAX_MAP_DIMENSION || h < 10 ||
+	    h > MAX_MAP_DIMENSION || w * h > MAX_MAP_SIZE ||
+	    (100 * (w + h)) / 228 > MAX_NUM_CITY) {
+		return 0;
+	}
+	*width = (int)w;
+	*height = (int)h;
+	return 1;
+}
 
 int main(int argc, char *argv[]) {
 	int c;
@@ -38,12 +62,15 @@ int main(int argc, char *argv[]) {
 	extern int optind;
 	int errflg = 0;
 	int wflg, sflg, dflg, Sflg;
+	int map_width, map_height;
 	int land;
 
 	wflg = 70; /* set defaults */
 	sflg = 5;
 	dflg = 2000;
 	Sflg = 10;
+	map_width = DEFAULT_MAP_WIDTH;
+	map_height = DEFAULT_MAP_HEIGHT;
 	game.savefile = "empire.sav";
 
 	/*
@@ -67,6 +94,11 @@ int main(int argc, char *argv[]) {
 		case 'f':
 			game.savefile = optarg;
 			break;
+		case 'g':
+			if (!parse_geometry(optarg, &map_width, &map_height)) {
+				errflg++;
+			}
+			break;
 		case '?': /* illegal option? */
 			errflg++;
 			break;
@@ -74,9 +106,11 @@ int main(int argc, char *argv[]) {
 	}
 	if (errflg || (argc - optind) != 0) {
 		(void)printf("empire: usage: empire [-w water] [-s smooth] [-d "
-		             "delay]\n");
+		             "delay] [-S saveinterval] [-f savefile] "
+		             "[-g WIDTHxHEIGHT]\n");
 		exit(1);
 	}
+	configure_geometry(map_width, map_height);
 
 	if (wflg < 10 || wflg > 90) {
 		(void)printf(

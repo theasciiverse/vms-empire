@@ -53,7 +53,7 @@ extern int user_lines;
 
 /* Screen updating macros */
 #define display_loc_u(loc) display_loc(USER, game.user_map, loc)
-#define display_loc_c(loc) display_loc(COMP, comp_map, loc)
+#define display_loc_c(loc) display_loc(COMP, game.comp_map, loc)
 #define print_sector_u(sector) print_sector(USER, game.user_map, sector)
 #define print_sector_c(sector) print_sector(COMP, game.comp_map, sector)
 #define loc_row(loc) ((loc) / MAP_WIDTH)
@@ -75,6 +75,7 @@ extern int user_lines;
 /* global routines */
 
 void empire(void);
+void configure_geometry(int width, int height);
 
 void attack(piece_info_t *att_obj, long loc);
 void comp_move(int nmoves);

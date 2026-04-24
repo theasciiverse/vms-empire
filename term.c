@@ -369,17 +369,14 @@ void help(char **text, int nlines) {
 	(void)refresh();
 }
 
-#define COL_DIGITS                                                             \
-	((MAP_WIDTH <= 100) ? 2 : ((MAP_WIDTH <= 1000 ? 3 : (1 / 0))))
-
 int loc_disp(int loc) {
 	int row = loc / MAP_WIDTH;
 	int nrow = row;
 	int col = loc % MAP_WIDTH;
 	ASSERT(loc == (row * MAP_WIDTH) + col);
 	int i;
-	// cppcheck-suppress zerodiv
-	for (i = COL_DIGITS; i > 0; i--) {
+	int col_digits = MAP_WIDTH <= 100 ? 2 : 3;
+	for (i = col_digits; i > 0; i--) {
 		nrow *= 10;
 	}
 	move(LINES - 1, 0);
