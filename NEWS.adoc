@@ -1,6 +1,6 @@
 = vms-empire news
 
-Rpository head::
+1.22: 2026-04-24::
       New -g option allows setting the map size.
       Repair install/uninstall in Makefile.
       Spellcheck all docs.
