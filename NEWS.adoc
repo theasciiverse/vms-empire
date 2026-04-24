@@ -1,8 +1,12 @@
 = vms-empire news
 
+Rpository head::
+      Repair install/uninstall in Makefile.
+      Spellcheck all docs.
+
 1.21: 2026-04-20::
       Yet more code hardening.
-      Documentation fully cobveted to asciidoc.
+      Documentation fully converted to asciidoc.
 
 1.20: 2026-04-16::
        More code hardening.

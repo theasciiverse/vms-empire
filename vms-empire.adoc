@@ -5,9 +5,11 @@
 :mansource: empire
 :manmanual: Games
 
-// spellcheck: add wargame savefile Automove automove ctrl-L
+// spellcheck: add wargame savefile Automove automove Ctrl-L
 // spellcheck: add Caltech DEC's DECUS VMS Leres Amdahl savefile dest neh
-// spellcheck: add func VAY
+// spellcheck: add func VAY AFPT QWE ZXC Idir Vpiece Jdir
+// spellcheck: add Printsector sav empmovie
+
 
 == NAME
 
