@@ -125,21 +125,21 @@ SOURCES = README.adoc HACKING NEWS.adoc control empire.6 vms-empire.adoc COPYING
 
 install: empire.6 uninstall
 	install -m 0755 -d $(BINDIR)
-	install -m 0755 -d $(PREFIX)$(MANDIR)/man6
-	install -m 0755 -d $(PREFIX)/share/applications/
-	install -m 0755 -d $(PREFIX)/share/icons/hicolor/48x48/apps/
-	install -m 0755 -d $(PREFIX)/share/appdata
+	install -m 0755 -d $(MANDIR)/man6
+	install -m 0755 -d $(DATADIR)/applications/
+	install -m 0755 -d $(DATADIR)/icons/hicolor/48x48/apps/
+	install -m 0755 -d $(DATADIR)/appdata
 	install -m 0755 vms-empire $(BINDIR)/
 	install -m 0644 empire.6 $(MANDIR)/man6/vms-empire.6
-	install -m 0644 vms-empire.desktop $(PREFIX)/share/applications/
-	install -m 0644 vms-empire.png $(PREFIX)/share/icons/hicolor/48x48/apps/
-	install -m 0644 vms-empire.adoc $(PREFIX)/share/appdata/
+	install -m 0644 vms-empire.desktop $(DATADIR)/applications/
+	install -m 0644 vms-empire.png $(DATADIR)/icons/hicolor/48x48/apps/
+	install -m 0644 vms-empire.adoc $(DATADIR)/appdata/
 
 uninstall:
 	rm -f $(BINDIR)/vms-empire $(MANDIR)/man6/vms-empire.6
-	rm -f $(PREFIX)/share/applications/vms-empire.desktop
-	rm -f $(PREFIX)/share/icons/hicolor/48x48/apps/vms-empire.png
-	rm -f $(PREFIX)/share/appdata/vms-empire.adoc
+	rm -f $(DATADIR)/applications/vms-empire.desktop
+	rm -f $(DATADIR)/icons/hicolor/48x48/apps/vms-empire.png
+	rm -f $(DATADIR)/appdata/vms-empire.adoc
 
 # Export
 
