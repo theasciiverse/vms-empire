@@ -480,6 +480,15 @@ void e_info(loc_t edit_cursor) {
 		e_piece_info(edit_cursor, ab);
 	} else if ((ab >= 'a') && (ab <= 't') && (game.debug)) {
 		e_piece_info(edit_cursor, ab);
+	} else if (game.debug &&
+	           (ab == MAP_LAND || ab == MAP_CITY || ab == MAP_SEA)) {
+		char location_buf[STRSIZE];
+		char *cur = location_buf;
+		size_t rem = sizeof(location_buf);
+
+		(void)buf_append(&cur, &rem, " Location: %d",
+		                 loc_disp(edit_cursor));
+		info("", location_buf, "");
 	} else {
 		huh();
 	}

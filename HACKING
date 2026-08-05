@@ -39,6 +39,19 @@ Debugging notes:
 	When debugging mode is turned on, the following commands are
 	available:
 
+	"!" -- fill unexplored and unowned-city cells in the user's map.
+	       Computer map information is used where available; otherwise,
+	       the actual terrain is revealed.
+
+	"?" -- in edit mode, report the map location under the cursor when
+	       it is on land, water, or an unowned city.  The existing
+	       information displays for pieces and owned cities remain
+	       available.
+
+	"^" -- fill unexplored and unowned-city cells in the computer's map.
+	       User map information is used where available; otherwise, the
+	       actual terrain is revealed.
+
 	"#" -- display a sector of the computer's map.
 
 	"%" -- enter "movie" mode.  The computer continuously makes

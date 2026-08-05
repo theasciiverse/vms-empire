@@ -230,6 +230,7 @@ The order cannot be any legal command.
 
 void c_debug(char order) {
 	char e;
+	int i;
 
 	switch (order) {
 	case '#':
@@ -263,6 +264,36 @@ void c_debug(char order) {
 
 	case '&': /* change game.print_vmap state */
 		game.print_vmap = get_chx();
+		break;
+
+	case '!': /* reveal the real map and computer knowledge to the user */
+		for (i = 0; i < MAP_SIZE; i++) {
+			if (game.user_map[i].contents == ' ' ||
+			    game.user_map[i].contents == MAP_CITY) {
+				if (game.comp_map[i].contents == ' ')
+					game.user_map[i].contents =
+					    game.real_map[i].contents;
+				else
+					game.user_map[i].contents =
+					    game.comp_map[i].contents;
+				game.user_map[i].seen = 1;
+			}
+		}
+		break;
+
+	case '^': /* reveal the real map and user knowledge to the computer */
+		for (i = 0; i < MAP_SIZE; i++) {
+			if (game.comp_map[i].contents == ' ' ||
+			    game.comp_map[i].contents == MAP_CITY) {
+				if (game.user_map[i].contents == ' ')
+					game.comp_map[i].contents =
+					    game.real_map[i].contents;
+				else
+					game.comp_map[i].contents =
+					    game.user_map[i].contents;
+				game.comp_map[i].seen = 1;
+			}
+		}
 		break;
 
 	default:
