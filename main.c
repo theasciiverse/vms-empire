@@ -24,6 +24,8 @@ options:
                default is 10
 
     -g geometry: map size as WIDTHxHEIGHT. Default is 100x60.
+
+    -t: enable the feature controlled by tflag. Disabled by default.
 */
 
 #include "empire.h"
@@ -32,7 +34,7 @@ options:
 #include <stdlib.h>
 #include <unistd.h>
 
-#define OPTFLAGS "w:s:d:S:f:g:"
+#define OPTFLAGS "w:s:d:S:f:g:t"
 
 static int parse_geometry(const char *geometry, int *width, int *height) {
 	char *end;
@@ -72,6 +74,7 @@ int main(int argc, char *argv[]) {
 	map_width = DEFAULT_MAP_WIDTH;
 	map_height = DEFAULT_MAP_HEIGHT;
 	game.savefile = "empire.sav";
+	game.tflag = false;
 
 	/*
 	 * extract command line options
@@ -99,6 +102,9 @@ int main(int argc, char *argv[]) {
 				errflg++;
 			}
 			break;
+		case 't':
+			game.tflag = true;
+			break;
 		case '?': /* illegal option? */
 			errflg++;
 			break;
@@ -107,7 +113,7 @@ int main(int argc, char *argv[]) {
 	if (errflg || (argc - optind) != 0) {
 		(void)printf("empire: usage: empire [-w water] [-s smooth] [-d "
 		             "delay] [-S saveinterval] [-f savefile] "
-		             "[-g WIDTHxHEIGHT]\n");
+		             "[-g WIDTHxHEIGHT] [-t]\n");
 		exit(1);
 	}
 	configure_geometry(map_width, map_height);

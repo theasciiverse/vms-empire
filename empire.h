@@ -305,6 +305,7 @@ typedef struct {
 	int MIN_CITY_DIST; /* cities must be at least this far apart */
 	int delay_time;
 	int save_interval; /* turns between autosaves */
+	bool tflag;        /* true iff the -t feature is enabled */
 
 	/* the world */
 	real_map_t *real_map; /* the way the world really looks */

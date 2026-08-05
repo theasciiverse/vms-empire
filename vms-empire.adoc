@@ -17,7 +17,8 @@ empire - the wargame of the century
 
 == SYNOPSIS
 
-*empire* [-w _water_] [-s _smooth_] [-d _delay_] [-S _save-interval_] [-f _savefile_] [-g _WIDTHxHEIGHT_]
+*empire* [-w _water_] [-s _smooth_] [-d _delay_] [-S _save-interval_]
+[-f _savefile_] [-g _WIDTHxHEIGHT_] [-t]
 
 == DESCRIPTION
 
@@ -46,6 +47,8 @@ rules that you do.
   be between 10 and 1000 inclusive, and the total map area cannot exceed
   100000 cells. Saved games can only be restored with the same geometry
   they were created with.
+`-t`::
+  Enable the optional feature controlled by the `tflag` feature flag.
 
 == EXAMPLES
 
