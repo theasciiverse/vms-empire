@@ -1,5 +1,8 @@
 = vms-empire news
 
+Repository::
+      New -t option makes the map a torus.
+
 1.22: 2026-04-24::
       New -g option allows setting the map size.
       Repair install/uninstall in Makefile.
