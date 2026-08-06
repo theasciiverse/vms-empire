@@ -341,7 +341,10 @@ void c_map(void) {
 	char line[MAP_HEIGHT + 2];
 
 	prompt("Filename? ");
-	get_str(game.jnkbuf, STRSIZE);
+	if (!get_str(game.jnkbuf, STRSIZE)) {
+		error("Unable to read filename.");
+		return;
+	}
 
 	f = fopen(game.jnkbuf, "wb");
 	if (f == NULL) {

@@ -147,8 +147,8 @@ int restore_game(void);
 void save_movie_screen(void);
 void replay_movie(void);
 
-void get_str(char *buf, int sizep); /* input routines */
-void get_strq(char *buf, int sizep);
+bool get_str(char *buf, int sizep); /* input routines */
+bool get_strq(char *buf, int sizep);
 unsigned char get_chx(void);
 int getint(char *message);
 unsigned char get_c(void);

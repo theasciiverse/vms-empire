@@ -191,23 +191,37 @@ void ksend(char *fmt, ...) {
 Get a string from the user, echoing characters all the while.
 */
 
-void get_str(char *buf, int sizep) {
+bool get_str(char *buf, int sizep) {
+	bool ok;
+
 	(void)echo();
-	get_strq(buf, sizep);
+	ok = get_strq(buf, sizep);
 	(void)noecho();
+	return ok;
 }
 
 /*
 Get a string from the user, ignoring the current echo mode.
 */
 
-void get_strq(char *buf, int sizep) {
+bool get_strq(char *buf, int sizep) {
+	int status;
+
+	if (buf == NULL || sizep <= 0)
+		return false;
+
+	buf[0] = '\0';
 	(void)nocrmode();
 	(void)refresh();
-	(void)getnstr(buf, sizep);
+	status = getnstr(buf, sizep - 1);
 	need_delay = false;
 	info("", "", "");
 	(void)crmode();
+	if (status != OK) {
+		buf[0] = '\0';
+		return false;
+	}
+	return true;
 }
 
 /*
@@ -236,7 +250,10 @@ int getint(char *message) {
 
 	for (;;) { /* until we get a legal number */
 		prompt(message, 0, 0, 0, 0, 0, 0, 0, 0);
-		get_str(buf, sizeof(buf));
+		if (!get_str(buf, sizeof(buf))) {
+			error("Unable to read input.");
+			continue;
+		}
 
 		for (p = buf; *p; p++) {
 			if (*p < '0' || *p > '9') {
