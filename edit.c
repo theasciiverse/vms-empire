@@ -32,7 +32,7 @@ void edit(loc_t edit_cursor) {
 	void e_attack(loc_t), e_repair(loc_t);
 
 	loc_t path_start;
-	int path_type;
+	int path_type = NOPIECE;
 
 	path_start = -1; /* not building a path yet */
 
