@@ -569,14 +569,6 @@ to ask the user for a file name.  If we cannot save the game, we will
 tell the user why.
 */
 
-/* macro to save typing; write an array, return if it fails */
-#define wbuf(buf)                                                              \
-	if (!xwrite(f, (char *)buf, sizeof(buf)))                              \
-		return
-#define wval(val)                                                              \
-	if (!xwrite(f, (char *)&val, sizeof(val)))                             \
-		return
-
 /* Save-file format identifiers. */
 #define SAVE_MAGIC "EMPIRE-SAVE"
 #define SAVE_MAGIC_LEN 11
@@ -1158,8 +1150,12 @@ void save_movie_screen(void) {
 			}
 		}
 	}
-	wbuf(mapbuf);
-	(void)fclose(f);
+	if (!xwrite(f, mapbuf, (unsigned int)MAP_SIZE)) {
+		(void)fclose(f);
+		return;
+	}
+	if (fclose(f) != 0)
+		perror("Cannot close empmovie.dat");
 }
 
 /*
@@ -1183,8 +1179,15 @@ void replay_movie(void) {
 	clear_screen();
 	for (;;) {
 		int row_inc, col_inc;
-		if (fread((char *)mapbuf, 1, sizeof(mapbuf), f) !=
-		    sizeof(mapbuf)) {
+		size_t bytes = fread(mapbuf, 1, (size_t)MAP_SIZE, f);
+
+		if (bytes != (size_t)MAP_SIZE) {
+			if (ferror(f)) {
+				perror("Cannot read empmovie.dat");
+			} else if (bytes != 0) {
+				fprintf(stderr,
+				        "Ignoring incomplete final movie frame.\n");
+			}
 			break;
 		}
 		round += 1;

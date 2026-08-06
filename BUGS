@@ -710,10 +710,6 @@ Line number refer to commit 65dd37.
     object.c:366 assumes a diagonal movement function and indexes dir_offset without validation.
     This can index before the array or deliberately abort at an edge.
 
-  - The movie feature writes and reads sizeof(char *), not MAP_SIZE, because mapbuf is now a
-    pointer. See game.c:32, game.c:1149, and game.c:1174. Movie frames are therefore unusable;
-    failed writes also leak the open file.
-
   - -S 0 is accepted at main.c:95, then becomes a modulo-by-zero at empire.c:55. Require a
     positive interval or define zero as “disable autosave.”
 
