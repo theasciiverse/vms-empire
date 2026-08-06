@@ -495,9 +495,9 @@ bool on_screen(loc_t loc) {
 	if (!game.tflag &&
 	    (new_r < ref_row /* past top of screen */
 	    ||
-	    new_r - ref_row > game.lines - NUMTOPS - 1 /* past bot of screen? */
+	    new_r - ref_row >= game.lines - NUMTOPS - 1 /* past bot of screen? */
 	    || new_c < ref_col /* past left edge of screen? */
-	    || new_c - ref_col >
+	    || new_c - ref_col >=
 	           game.cols - NUMSIDES)) { /* past right edge of screen? */
 		return (false);
 	}
