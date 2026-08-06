@@ -662,7 +662,7 @@ acceptance-test pipeline.
   │ Awake            │ [255 255 255] │ White                         │
   ├──────────────────┼───────────────┼───────────────────────────────┤
   │ Sleeping         │ [0 0 0]       │ Black                         │    
-  ├──────────────────┼───────────────┼───────────────────────────────┤
+  ├──────────────────┼───────────────┼───────────────────────65dd37────────┤
   │ Sentry           │ [255 128 128] │ Light red/salmon              │    
   ├──────────────────┼───────────────┼───────────────────────────────┤    
   │ Explore          │ [144 238 144] │ Light green                   │
@@ -677,3 +677,82 @@ acceptance-test pipeline.
   Other colors:                                                           
   - Production overlay: [128 128 128] (gray)                           
   - Waypoint overlay: [0 255 0] (green)
+
+Bugs found by AI
+----------------
+
+Line number refer to commit 65dd37.
+
+### High severity
+
+  - Zoom rendering reads past the map when dimensions are not exact multiples of the zoom cell
+    size. The final row/column blocks are not clamped in display.c:566, display.c:626, and
+    display.c:787. ASan confirmed a heap-buffer-overflow with 101x61.
+
+  - Recursive continent walkers overflow the stack on supported large maps. map.c:152,
+    game.c:505, and potentially map.c:1038 recurse once per reachable cell, while maps may
+    contain 100,000 cells. Replace these with iterative queues/stacks; ASan reproduced the
+    overflow.
+
+  - Accepted small, high-water maps frequently cannot hold all required cities. Water allocation
+    counts the non-playable border at game.c:176, but city placement only accepts playable cells
+    at game.c:260, eventually asserting at game.c:274. For 10x10, 90% water, 937 of 1,000
+    generated maps lacked enough land. Validate feasibility or regenerate terrain rather than
+    decrementing indefinitely.
+
+  - A failed manual restore corrupts the running game. Restore writes directly into global state
+    beginning at game.c:904, then returns false without rollback at game.c:1027; the R command
+    ignores that return value at empire.c:142. Parse and validate into staging storage, then
+    commit atomically.
+
+  - Normal edit commands can invalidate satellite movement. Commands such as random, wake,
+    sleep, or cardinal movement overwrite obj->func in edit.c:201 and edit.c:343, while
+    object.c:366 assumes a diagonal movement function and indexes dir_offset without validation.
+    This can index before the array or deliberately abort at an edge.
+
+  - The movie feature writes and reads sizeof(char *), not MAP_SIZE, because mapbuf is now a
+    pointer. See game.c:32, game.c:1149, and game.c:1174. Movie frames are therefore unusable;
+    failed writes also leak the open file.
+
+  - -S 0 is accepted at main.c:95, then becomes a modulo-by-zero at empire.c:55. Require a
+    positive interval or define zero as “disable autosave.”
+
+  ### Medium severity
+
+  - Saves do not record game.tflag. The serialized settings at game.c:752 omit topology, so
+    restoring with different command-line options silently changes movement and pathfinding. Add
+    topology flags and bump the save version.
+
+  - Saves are written directly over the previous file at game.c:737, and fclose errors are
+    ignored at game.c:797. A disk-full error can destroy the last good save. Write a same-
+    directory temporary file, check flush/close, then rename atomically.
+
+  - Satellite visibility does not fully wrap on toroidal maps. object.c:531 drops its two-square
+    scan points at seams, contradicting the documented wrapping visibility.
+
+  - Sector selection can create an out-of-range cursor for valid custom geometries. extern.h:70
+    does not clamp partial sectors, and edit.c:164 installs the result directly. For example,
+    sector 4 on an 11x11 map produces a location beyond MAP_SIZE.
+
+  - getnstr is passed the entire buffer size at term.c:204. ncurses may accept that many
+    characters and append a NUL, requiring size + 1. Pass sizep - 1 and check the return value.
+
+  ### Lower-level correctness defects
+
+  - Random choice excludes the final candidate in game.c:234 and usermove.c:276. irand(n)
+    already returns 0..n-1.
+
+  - Fighter landing selects full carriers in usermove.c:482, even though entering them is
+    rejected elsewhere.
+
+  - Non-toroidal on_screen uses > instead of >= at display.c:495, allowing drawing into the
+    status row/column.
+
+  - path_type is passed while indeterminate at edit.c:78. Initialize it to NOPIECE.
+  - The manpage build is inconsistent: all expects vms-empire.1, while installation expects
+    empire.6 without a rule, at Makefile:82 and Makefile:126.
+
+  Recommended next steps are to centralize coordinate wrapping/clamping, replace recursive/VLA
+  map work with reusable heap workspaces, make save/movie formats transactional and versioned,
+  and add sanitizer-backed tests covering minimum/default/maximum geometries, partial zoom
+  cells, torus seams, truncated saves, and CLI boundary values.
