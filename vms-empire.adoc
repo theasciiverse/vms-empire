@@ -70,13 +70,14 @@ This produces a map with lots of land and a few lakes. The computer will
 have a hard time on this sort of map as it will try and produce lots of
 troop transports, which are fairly useless.
 
-There are two other option.
+There are two other options.
 
 `-S` _interval_::
-  sets the _save interval_ for the game (default is 10). Once per
+  sets the _save interval_ for the game (default is 10). An interval of
+  zero disables automatic interval saves. For positive values, once per
   _interval_ turns the game state will be automatically saved after your
-  move. It will be saved in any case when you change modes or do various
-  special things from command mode, such as `M` or `N`.
+  move. Explicit saves and saves performed when you change modes or use
+  special command-mode operations such as `M` or `N` remain enabled.
 `-f` _savefile_::
   Set the save file name (normally empire.sav).
 

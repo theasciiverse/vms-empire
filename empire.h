@@ -304,7 +304,7 @@ typedef struct {
 	int WATER_RATIO;   /* percentage of map that is water */
 	int MIN_CITY_DIST; /* cities must be at least this far apart */
 	int delay_time;
-	int save_interval; /* turns between autosaves */
+	int save_interval; /* turns between autosaves; 0 disables them */
 	bool tflag;        /* true iff the -t feature is enabled */
 
 	/* the world */

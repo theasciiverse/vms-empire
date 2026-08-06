@@ -20,8 +20,8 @@ options:
     -d delay:  number of milliseconds to delay between output.
                default is 2000 (2 seconds).
 
-    -S saveinterval: sets turn interval between saves.
-               default is 10
+    -S saveinterval: sets turn interval between automatic saves.
+                Zero disables autosaving.  Default is 10.
 
     -g geometry: map size as WIDTHxHEIGHT. Default is 100x60.
 
@@ -132,6 +132,11 @@ int main(int argc, char *argv[]) {
 	if (dflg < 0 || dflg > 30000) {
 		(void)printf(
 		    "empire: -d argument must be in the range 0..30000.\n");
+		exit(1);
+	}
+	if (Sflg < 0) {
+		(void)printf(
+		    "empire: -S argument must be greater or equal to zero.\n");
 		exit(1);
 	}
 

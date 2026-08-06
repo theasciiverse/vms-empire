@@ -52,8 +52,12 @@ void empire(void) {
 		if (game.automove) { /* don't ask for cmd in auto mode */
 			user_move();
 			comp_move(1);
-			if (++turn % game.save_interval == 0) {
-				save_game();
+			if (game.save_interval > 0) {
+				turn += 1;
+				if (turn >= game.save_interval) {
+					save_game();
+					turn = 0;
+				}
 			}
 		} else {
 			prompt(""); /* blank top line */
