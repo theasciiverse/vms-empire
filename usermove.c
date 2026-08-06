@@ -473,9 +473,9 @@ void move_fill(piece_info_t *obj) {
 }
 
 /*
-Here we have a piece that wants to land at the nearest carrier or
-owned city.  We scan through the lists of cities and carriers looking
-for the closest one.  We then move toward that item's location.
+Here we have a piece that wants to land at the nearest carrier with room
+or owned city.  We scan through the lists of cities and carriers looking
+for the closest available one.  We then move toward that item's location.
 The nearest landing field must be within the object's range.
 */
 
@@ -488,7 +488,7 @@ void move_land(piece_info_t *obj) {
 
 	for (p = game.user_obj[CARRIER]; p != NULL; p = p->piece_link.next) {
 		long new_dist = dist(obj->loc, p->loc);
-		if (new_dist < best_dist) {
+		if (obj_capacity(p) > p->count && new_dist < best_dist) {
 			best_dist = new_dist;
 			best_loc = p->loc;
 		}
