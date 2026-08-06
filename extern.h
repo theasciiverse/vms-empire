@@ -113,6 +113,7 @@ bool vmap_shore(const view_map_t *vmap, long loc);
 bool rmap_shore(long loc);
 bool vmap_at_sea(const view_map_t *vmap, long loc);
 bool rmap_at_sea(long loc);
+loc_t wrap_map_loc(loc_t loc);
 
 /* display routines */
 void announce(char *);
@@ -198,6 +199,7 @@ void ksend(char *fmt, ...);
 
 /* utility routines */
 void ttinit(void);
+void update_display_size(void);
 void eassert(char *expression, char *file, int line);
 void empend(void);
 char upper(char c);

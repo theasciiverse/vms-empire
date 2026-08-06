@@ -45,8 +45,9 @@ int rndint(int minp, int maxp) {
 #endif
 
 /*
-Return the distance between two locations.  This is simply
-the max of the absolute differnce between the x and y coordinates.
+Return the distance between two locations.  This is the maximum of the
+absolute differences between their coordinates.  On a toroidal map, use
+the shorter distance across each seam.
 */
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -55,13 +56,21 @@ the max of the absolute differnce between the x and y coordinates.
 
 int dist(loc_t a, loc_t b) {
 	int ax, ay, bx, by;
+	int row_dist, col_dist;
 
 	ax = loc_row(a);
 	ay = loc_col(a);
 	bx = loc_row(b);
 	by = loc_col(b);
 
-	return (MAX(ABS(ax - bx), ABS(ay - by)));
+	row_dist = ABS(ax - bx);
+	col_dist = ABS(ay - by);
+	if (game.tflag) {
+		row_dist = MIN(row_dist, MAP_HEIGHT - 2 - row_dist);
+		col_dist = MIN(col_dist, MAP_WIDTH - 2 - col_dist);
+	}
+
+	return (MAX(row_dist, col_dist));
 }
 
 /*

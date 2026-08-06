@@ -48,7 +48,10 @@ rules that you do.
   100000 cells. Saved games can only be restored with the same geometry
   they were created with.
 `-t`::
-  Enable the optional feature controlled by the `tflag` feature flag.
+  Treat the playable map as a torus. Movement, pathfinding, visibility,
+  terrain analysis, and sector displays wrap across the top/bottom and
+  left/right seams. Satellites retain their normal edge-bouncing behavior.
+  This topology setting is stored in and restored from saved games.
 
 == EXAMPLES
 

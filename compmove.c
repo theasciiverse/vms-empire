@@ -801,6 +801,7 @@ bool load_army(piece_info_t *obj) {
 
 	for (i = 0; i < 8; i++) { /* try surrounding squares */
 		loc_t x_loc = obj->loc + dir_offset[i];
+		x_loc = wrap_map_loc(x_loc);
 		if (game.real_map[x_loc].on_board)
 			p = find_best_tt(p, x_loc);
 	}
@@ -829,6 +830,7 @@ loc_t move_away(const view_map_t *vmap, loc_t loc, const char *terrain) {
 
 	for (i = 0; i < 8; i++) {
 		loc_t new_loc = loc + dir_offset[i];
+		new_loc = wrap_map_loc(new_loc);
 		if (game.real_map[new_loc].on_board &&
 		    strchr(terrain, vmap[new_loc].contents))
 			return (new_loc);
@@ -853,6 +855,7 @@ loc_t find_attack(const loc_t loc, const char *obj_list, const char *terrain) {
 	best_val = INFINITY;
 	for (i = 0; i < 8; i++) {
 		loc_t new_loc = loc + dir_offset[i];
+		new_loc = wrap_map_loc(new_loc);
 
 		if (game.real_map[new_loc].on_board /* can we move here? */
 		    && strchr(terrain, game.real_map[new_loc].contents)) {
@@ -1108,6 +1111,7 @@ void move_objective(piece_info_t *obj, path_map_t pathmap[], loc_t new_loc,
 		pathmap[old_loc].terrain = T_UNKNOWN;
 		for (d = 0; d < 8; d++) {
 			new_loc = old_loc + dir_offset[d];
+			new_loc = wrap_map_loc(new_loc);
 			pathmap[new_loc].terrain = T_UNKNOWN;
 		}
 		/* pathmap is already marked, but this should work */

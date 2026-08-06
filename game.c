@@ -522,7 +522,8 @@ static void mark_cont(loc_t mapi) {
 	}
 
 	for (i = 0; i < 8; i++) { /* look at surrounding squares */
-		mark_cont(mapi + dir_offset[i]);
+		loc_t adjacent = mapi + dir_offset[i];
+		mark_cont(wrap_map_loc(adjacent));
 	}
 }
 
@@ -579,7 +580,9 @@ tell the user why.
 /* Save-file format identifiers. */
 #define SAVE_MAGIC "EMPIRE-SAVE"
 #define SAVE_MAGIC_LEN 11
-#define SAVE_VERSION 2
+#define SAVE_VERSION 3
+#define SAVE_FLAG_TORUS 0x00000001u
+#define SAVE_KNOWN_FLAGS SAVE_FLAG_TORUS
 
 /*
 Save format (little-endian, field-wise, versioned):
@@ -592,6 +595,7 @@ Header:
   u32 num_city
   u32 list_size
   u32 num_objects
+  u32 feature_flags (bit 0 = toroidal topology)
 State:
   i64 date
   u8  automove
@@ -747,6 +751,7 @@ void save_game(void) {
 	S_WU32(NUM_CITY);
 	S_WU32(LIST_SIZE);
 	S_WU32(NUM_OBJECTS);
+	S_WU32(game.tflag ? SAVE_FLAG_TORUS : 0);
 
 	S_WI64(game.date);
 	S_WU8(game.automove);
@@ -829,7 +834,7 @@ int restore_game(void) {
 	int32_t v_i32;
 	int64_t v_i64;
 	uint32_t map_width, map_height, map_size;
-	uint32_t num_city, list_size, num_objects;
+	uint32_t num_city, list_size, num_objects, feature_flags;
 	char magic[SAVE_MAGIC_LEN];
 
 	f = fopen(game.savefile, "rb"); /* open for input */
@@ -882,6 +887,12 @@ int restore_game(void) {
 	R_RU32(num_city);
 	R_RU32(list_size);
 	R_RU32(num_objects);
+	R_RU32(feature_flags);
+
+	if (feature_flags & ~SAVE_KNOWN_FLAGS) {
+		fprintf(stderr, "Saved file uses unsupported feature flags.\n");
+		goto restore_cleanup;
+	}
 
 	if (map_width != (uint32_t)MAP_WIDTH ||
 	    map_height != (uint32_t)MAP_HEIGHT ||
@@ -1018,6 +1029,8 @@ int restore_game(void) {
 	read_embark(game.comp_obj[TRANSPORT], ARMY);
 	read_embark(game.comp_obj[CARRIER], FIGHTER);
 
+	game.tflag = (feature_flags & SAVE_FLAG_TORUS) != 0;
+	update_display_size();
 	(void)fclose(f);
 	kill_display(); /* what we had is no longer good */
 	topmsg(3, "Game restored from save file.");

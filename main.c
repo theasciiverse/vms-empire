@@ -25,7 +25,7 @@ options:
 
     -g geometry: map size as WIDTHxHEIGHT. Default is 100x60.
 
-    -t: enable the feature controlled by tflag. Disabled by default.
+    -t: make the playable map wrap at its top, bottom, left, and right edges.
 */
 
 #include "empire.h"

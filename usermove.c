@@ -264,6 +264,7 @@ void move_random(piece_info_t *obj) {
 
 	for (i = 0; i < 8; i++) {
 		loc_t loc = obj->loc + dir_offset[i];
+		loc = wrap_map_loc(loc);
 		if (good_loc(obj, loc)) {
 			loc_list[nloc] = loc; /* remember this location */
 			nloc++; /* count locations we can move to */
@@ -516,6 +517,7 @@ void move_dir(piece_info_t *obj) {
 
 	dir = MOVE_DIR(obj->func);
 	loc = obj->loc + dir_offset[dir];
+	loc = wrap_map_loc(loc);
 
 	if (good_loc(obj, loc)) {
 		move_obj(obj, loc);
@@ -952,6 +954,7 @@ void user_dir(piece_info_t *obj, int dir) {
 	loc_t loc;
 
 	loc = obj->loc + dir_offset[dir];
+	loc = wrap_map_loc(loc);
 
 	if (good_loc(obj, loc)) {
 		move_obj(obj, loc);
@@ -1213,6 +1216,7 @@ bool awake(piece_info_t *obj) {
 	}
 	for (i = 0; i < 8; i++) { /* for each surrounding cell */
 		loc_t loc = obj->loc + dir_offset[i];
+		loc = wrap_map_loc(loc);
 		char c = game.user_map[loc].contents;
 		const piece_info_t *enemy = find_obj_at_loc(loc);
 

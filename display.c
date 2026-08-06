@@ -34,6 +34,32 @@ static void disp_square(view_map_t *vp);
 static void disp_city_prod(loc_t t);
 static bool on_screen(loc_t loc);
 
+/* Convert between playable map coordinates and wrapped screen offsets. */
+
+static int wrap_axis(int coordinate, int dimension) {
+	int span = dimension - 2;
+
+	while (coordinate < 1)
+		coordinate += span;
+	while (coordinate > dimension - 2)
+		coordinate -= span;
+	return coordinate;
+}
+
+static int map_axis_at(int reference, int offset, int dimension) {
+	int coordinate = reference + offset;
+
+	return game.tflag ? wrap_axis(coordinate, dimension) : coordinate;
+}
+
+static int screen_axis_offset(int coordinate, int reference, int dimension) {
+	int offset = coordinate - reference;
+
+	if (game.tflag && offset < 0)
+		offset += dimension - 2;
+	return offset;
+}
+
 #ifdef A_COLOR
 void init_colors(void) {
 	start_color();
@@ -185,11 +211,11 @@ Display a location which exists on the screen.
 */
 
 void show_loc(view_map_t vmap[], loc_t loc) {
-	int r, c;
+	int display_row, display_col;
 
-	r = loc_row(loc);
-	c = loc_col(loc);
-	(void)move(r - ref_row + NUMTOPS, c - ref_col);
+	display_row = screen_axis_offset(loc_row(loc), ref_row, MAP_HEIGHT);
+	display_col = screen_axis_offset(loc_col(loc), ref_col, MAP_WIDTH);
+	(void)move(display_row + NUMTOPS, display_col);
 
 	if (game.showprod && vmap[loc].contents == 'O') {
 		disp_city_prod(loc);
@@ -197,7 +223,7 @@ void show_loc(view_map_t vmap[], loc_t loc) {
 		disp_square(&vmap[loc]);
 	}
 	save_cursor = loc; /* remember cursor location */
-	(void)move(r - ref_row + NUMTOPS, c - ref_col);
+	(void)move(display_row + NUMTOPS, display_col);
 }
 
 /*
@@ -226,7 +252,7 @@ void print_sector(int whose, view_map_t vmap[], int sector)
 
 	int first_row, first_col, last_row, last_col;
 	int display_rows, display_cols;
-	int r, c;
+	int r, c, display_row, display_col;
 
 	save_sector = sector; /* remember last sector displayed */
 	change_ok = false;    /* we are displaying a new sector */
@@ -240,7 +266,8 @@ void print_sector(int whose, view_map_t vmap[], int sector)
 	last_row = first_row + ROWS_PER_SECTOR - 1;
 	last_col = first_col + COLS_PER_SECTOR - 1;
 
-	if (!(whose == whose_map      /* correct map is on screen? */
+	if (game.tflag ||
+	    !(whose == whose_map      /* correct map is on screen? */
 	      && ref_row <= first_row /* top row on screen? */
 	      && ref_col <= first_col /* first col on screen? */
 	      && ref_row + display_rows - 1 >= last_row /* bot row on screen? */
@@ -255,41 +282,54 @@ void print_sector(int whose, view_map_t vmap[], int sector)
 	ref_row = first_row - (display_rows - ROWS_PER_SECTOR) / 2;
 	ref_col = first_col - (display_cols - COLS_PER_SECTOR) / 2;
 
-	/* try not to go past bottom of map */
-	if (ref_row + display_rows - 1 > MAP_HEIGHT - 1) {
-		ref_row = MAP_HEIGHT - 1 - (display_rows - 1);
-	}
+	if (game.tflag) {
+		int center_row = first_row + ROWS_PER_SECTOR / 2;
+		int center_col = first_col + COLS_PER_SECTOR / 2;
 
-	/* never go past top of map */
-	if (ref_row < 0) {
-		ref_row = 0;
-	}
+		if (center_row < 1)
+			center_row = 1;
+		else if (center_row > MAP_HEIGHT - 2)
+			center_row = MAP_HEIGHT - 2;
+		if (center_col < 1)
+			center_col = 1;
+		else if (center_col > MAP_WIDTH - 2)
+			center_col = MAP_WIDTH - 2;
 
-	/* same with columns */
-	if (ref_col + display_cols - 1 > MAP_WIDTH - 1) {
-		ref_col = MAP_WIDTH - 1 - (display_cols - 1);
-	}
-
-	if (ref_col < 0) {
-		ref_col = 0;
+		ref_row = wrap_axis(center_row - display_rows / 2, MAP_HEIGHT);
+		ref_col = wrap_axis(center_col - display_cols / 2, MAP_WIDTH);
+	} else {
+		/* keep the bounded view inside the map */
+		if (ref_row + display_rows - 1 > MAP_HEIGHT - 1)
+			ref_row = MAP_HEIGHT - display_rows;
+		if (ref_row < 0)
+			ref_row = 0;
+		if (ref_col + display_cols - 1 > MAP_WIDTH - 1)
+			ref_col = MAP_WIDTH - display_cols;
+		if (ref_col < 0)
+			ref_col = 0;
 	}
 
 	whose_map = whose; /* remember whose map is displayed */
 	display_screen(vmap);
 
 	/* print x-coordinates along bottom of screen */
-	for (c = ref_col; c < ref_col + display_cols && c < MAP_WIDTH; c++) {
-		if (c % 10 == 0) {
-			pos_str(game.lines - 1, c - ref_col, "%d", c);
-		}
+	for (display_col = 0; display_col < display_cols; display_col++) {
+		c = map_axis_at(ref_col, display_col, MAP_WIDTH);
+		if (!game.tflag && c >= MAP_WIDTH)
+			break;
+		if (c % 10 == 0 || (game.tflag && c == 1))
+			pos_str(game.lines - 1, display_col, "%d", c);
 	}
 	/* print y-coordinates along right of screen */
-	for (r = ref_row; r < ref_row + display_rows && r < MAP_HEIGHT; r++) {
+	for (display_row = 0; display_row < display_rows; display_row++) {
+		r = map_axis_at(ref_row, display_row, MAP_HEIGHT);
+		if (!game.tflag && r >= MAP_HEIGHT)
+			break;
 		if (r % 2 == 0) {
-			pos_str(r - ref_row + NUMTOPS, game.cols - NUMSIDES + 1,
+			pos_str(display_row + NUMTOPS, game.cols - NUMSIDES + 1,
 			        "%2d", r);
 		} else {
-			pos_str(r - ref_row + NUMTOPS, game.cols - NUMSIDES + 1,
+			pos_str(display_row + NUMTOPS, game.cols - NUMSIDES + 1,
 			        "  ");
 		}
 	}
@@ -381,17 +421,24 @@ Display the portion of the map that appears on the screen.
 
 void display_screen(view_map_t vmap[]) {
 	int display_rows, display_cols;
-	int r, c;
+	int r, c, display_row, display_col;
 	loc_t t;
 
 	display_rows = game.lines - NUMTOPS - 1; /* num lines to display */
 	display_cols = game.cols - NUMSIDES;
 
-	for (r = ref_row; r < ref_row + display_rows && r < MAP_HEIGHT; r++) {
-		for (c = ref_col; c < ref_col + display_cols && c < MAP_WIDTH;
-		     c++) {
+	for (display_row = 0; display_row < display_rows; display_row++) {
+		r = map_axis_at(ref_row, display_row, MAP_HEIGHT);
+		if (!game.tflag && r >= MAP_HEIGHT)
+			break;
+
+		for (display_col = 0; display_col < display_cols; display_col++) {
+			c = map_axis_at(ref_col, display_col, MAP_WIDTH);
+			if (!game.tflag && c >= MAP_WIDTH)
+				break;
+
 			t = row_col_loc(r, c);
-			(void)move(r - ref_row + NUMTOPS, c - ref_col);
+			(void)move(display_row + NUMTOPS, display_col);
 			if (game.showprod && vmap[t].contents == 'O') {
 				disp_city_prod(t);
 			} else {
@@ -411,9 +458,10 @@ bool move_cursor(loc_t *cursor, int offset)
 /* cursor is current cursor position, offset is offset to add to cursor */
 {
 	loc_t t;
-	int r, c;
+	int display_row, display_col;
 
 	t = *cursor + offset; /* proposed location */
+	t = wrap_map_loc(t);
 	if (!game.real_map[t].on_board) {
 		return (false); /* trying to move off map */
 	}
@@ -424,9 +472,11 @@ bool move_cursor(loc_t *cursor, int offset)
 	*cursor = t; /* update cursor position */
 	save_cursor = *cursor;
 
-	r = loc_row(save_cursor);
-	c = loc_col(save_cursor);
-	(void)move(r - ref_row + NUMTOPS, c - ref_col);
+	display_row = screen_axis_offset(loc_row(save_cursor), ref_row,
+	                                 MAP_HEIGHT);
+	display_col = screen_axis_offset(loc_col(save_cursor), ref_col,
+	                                 MAP_WIDTH);
+	(void)move(display_row + NUMTOPS, display_col);
 
 	return (true);
 }
@@ -436,17 +486,28 @@ See if a location is displayed on the screen.
 */
 
 bool on_screen(loc_t loc) {
+	int display_row, display_col;
 	int new_r, new_c;
 
 	new_r = loc_row(loc);
 	new_c = loc_col(loc);
 
-	if (new_r < ref_row /* past top of screen */
+	if (!game.tflag &&
+	    (new_r < ref_row /* past top of screen */
 	    ||
 	    new_r - ref_row > game.lines - NUMTOPS - 1 /* past bot of screen? */
 	    || new_c < ref_col /* past left edge of screen? */
 	    || new_c - ref_col >
-	           game.cols - NUMSIDES) { /* past right edge of screen? */
+	           game.cols - NUMSIDES)) { /* past right edge of screen? */
+		return (false);
+	}
+	if (!game.tflag)
+		return (true);
+
+	display_row = screen_axis_offset(new_r, ref_row, MAP_HEIGHT);
+	display_col = screen_axis_offset(new_c, ref_col, MAP_WIDTH);
+	if (display_row < 0 || display_row >= game.lines - NUMTOPS - 1 ||
+	    display_col < 0 || display_col >= game.cols - NUMSIDES) {
 		return (false);
 	}
 
@@ -619,6 +680,17 @@ void clreol(int linep, int colp) {
 Initialize the terminal.
 */
 
+void update_display_size(void) {
+	game.lines = LINES;
+	game.cols = COLS;
+	if (game.lines > MAP_HEIGHT + NUMTOPS + 1 - (game.tflag ? 2 : 0)) {
+		game.lines = MAP_HEIGHT + NUMTOPS + 1 - (game.tflag ? 2 : 0);
+	}
+	if (game.cols > MAP_WIDTH + NUMSIDES - (game.tflag ? 2 : 0)) {
+		game.cols = MAP_WIDTH + NUMSIDES - (game.tflag ? 2 : 0);
+	}
+}
+
 void ttinit(void) {
 	(void)initscr();
 	(void)noecho();
@@ -626,14 +698,7 @@ void ttinit(void) {
 #ifdef A_COLOR
 	init_colors();
 #endif /* A_COLOR */
-	game.lines = LINES;
-	game.cols = COLS;
-	if (game.lines > MAP_HEIGHT + NUMTOPS + 1) {
-		game.lines = MAP_HEIGHT + NUMTOPS + 1;
-	}
-	if (game.cols > MAP_WIDTH + NUMSIDES) {
-		game.cols = MAP_WIDTH + NUMSIDES;
-	}
+	update_display_size();
 }
 
 /*

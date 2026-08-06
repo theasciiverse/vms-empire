@@ -115,6 +115,7 @@ loc_t find_transport(int owner, loc_t loc) {
 
 	for (i = 0; i < 8; i++) { /* look around */
 		loc_t new_loc = loc + dir_offset[i];
+		new_loc = wrap_map_loc(new_loc);
 		const piece_info_t *t = find_nfull(TRANSPORT, new_loc);
 		if (t != NULL && t->owner == owner)
 			return (new_loc);
@@ -517,6 +518,7 @@ void scan(view_map_t vmap[], loc_t loc) {
 
 	for (i = 0; i < 8; i++) { /* for each surrounding cell */
 		loc_t xloc = loc + dir_offset[i];
+		xloc = wrap_map_loc(xloc);
 		update(vmap, xloc);
 	}
 	update(vmap, loc); /* update current location as well */
