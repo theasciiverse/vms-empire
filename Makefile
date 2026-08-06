@@ -30,9 +30,9 @@ VERSION=$(shell sed -n <NEWS.adoc '/^[0-9]/s/:.*//p' | head -1)
 # we use "-a nofooter".
 # To debug asciidoc problems, you may need to run "xmllint --nonet --noout --valid"
 # on the intermediate XML that throws an error.
-.SUFFIXES: .html .adoc .1
+.SUFFIXES: .html .adoc .6
 
-.adoc.1:
+.adoc.6:
 	asciidoctor -D. -a nofooter -b manpage $<
 .adoc.html:
 	asciidoctor -D. -a nofooter -a webfonts! $<
@@ -79,7 +79,7 @@ OFILES = \
 	usermove.o \
 	util.o
 
-all: vms-empire vms-empire.1
+all: vms-empire vms-empire.6
 
 vms-empire: $(OFILES)
 	$(CC) $(PROFILE) -o vms-empire $(OFILES) $(LIBS)
