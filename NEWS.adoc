@@ -2,6 +2,17 @@
 
 Repository::
       New -t option makes the map a torus.
+      Keep satellite movement functions diagonal
+      Keep city placement feasible on custom maps
+      Fox an old bug related to not foltering transport selection by pwner.
+      Avoid potential overrun from zoom walkers.
+      Fix minor pub in the ramp number number selection...
+      Fix a minor error in the fighter landing logic.
+      Fix erroneous buffer like computation on input.
+      Correctly install the manual page in section 6.
+      Prevent an off-by-one in the display code.
+      Intepret -S 0 as "disable autosave"
+      Fix errors related to savws of variable-sized maps.
 
 1.22: 2026-04-24::
       New -g option allows setting the map size.
