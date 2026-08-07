@@ -46,20 +46,39 @@ static void comp_storage_init(void) {
 	comp_storage_done = true;
 }
 
-bool load_army(piece_info_t *obj);
-bool lake(loc_t loc);
-bool overproduced(const city_info_t *cityp, const int *city_count);
-bool nearby_load(const piece_info_t *obj, loc_t loc);
-count_t nearby_count(loc_t loc);
-void move_objective(piece_info_t *obj, path_map_t pathmap[], loc_t new_loc,
-                    char *adj_list);
-void comp_set_prod(city_info_t *, int);
-void comp_set_needed(city_info_t *, int *, bool, bool);
-void comp_prod(city_info_t *, bool);
+static void do_cities(void);
+static void comp_prod(city_info_t *, bool);
+static void comp_set_prod(city_info_t *, int);
+static bool overproduced(const city_info_t *cityp, const int *city_count);
+static int need_more(const int *city_count, int prod1, int prod2);
+static void comp_set_needed(city_info_t *, int *, bool, bool);
+static bool lake(loc_t loc);
+static void do_pieces(void);
+static void cpiece_move(piece_info_t *obj);
+static void move1(piece_info_t *obj);
+static void army_move(piece_info_t *obj);
+static void unmark_explore_locs(view_map_t *xmap);
+static void make_army_load_map(const piece_info_t *obj, view_map_t *xmap,
+	                       const view_map_t *vmap);
+static bool nearby_load(const piece_info_t *obj, loc_t loc);
+static count_t nearby_count(loc_t loc);
+static void make_tt_load_map(view_map_t *xmap, const view_map_t *vmap);
+static void make_unload_map(view_map_t *xmap, const view_map_t *vmap);
+static void board_ship(piece_info_t *obj, path_map_t *pmap, loc_t dest);
+static piece_info_t *find_best_tt(piece_info_t *best, loc_t loc, int owner);
+static bool load_army(piece_info_t *obj);
+static loc_t move_away(const view_map_t *vmap, loc_t loc,
+	               const char *terrain);
+static loc_t find_attack(loc_t loc, const char *obj_list,
+	                const char *terrain);
+static void transport_move(piece_info_t *obj);
+static void fighter_move(piece_info_t *obj);
+static void ship_move(piece_info_t *obj);
+static void move_objective(piece_info_t *obj, path_map_t pathmap[],
+	                   loc_t new_loc, char *adj_list);
+static void check_endgame(void);
 
 void comp_move(int nmoves) {
-	void do_cities(void), do_pieces(void), check_endgame(void);
-
 	int i;
 	const piece_info_t *obj;
 
@@ -106,7 +125,7 @@ number of producers we have of each type of piece.  Fifth, we never
 build carriers, as we don't have a good strategy for moving these.
 */
 
-void do_cities(void) {
+static void do_cities(void) {
 	int i;
 	bool is_lake;
 
@@ -163,7 +182,7 @@ The algorithm below contains three parts:
 3)  Meet the ratio requirements given above.
 */
 
-void comp_prod(city_info_t *cityp, bool is_lake) {
+static void comp_prod(city_info_t *cityp, bool is_lake) {
 	int city_count[NUM_OBJECTS]; /* # of cities producing each piece */
 	int cont_map[MAP_SIZE];
 	int total_cities;
@@ -299,7 +318,7 @@ Set production for a computer city to a given type.  Don't
 reset production if it is already correct.
 */
 
-void comp_set_prod(city_info_t *cityp, int type) {
+static void comp_set_prod(city_info_t *cityp, int type) {
 	if (cityp->prod == type)
 		return;
 
@@ -313,7 +332,7 @@ void comp_set_prod(city_info_t *cityp, int type) {
 See if a city is producing an object which is being overproduced.
 */
 
-bool overproduced(const city_info_t *cityp, const int *city_count) {
+static bool overproduced(const city_info_t *cityp, const int *city_count) {
 	int i;
 
 	for (i = 0; i < NUM_OBJECTS; i++) {
@@ -331,7 +350,7 @@ See if one type of production is needed more than another type.
 Return the most-needed type of production.
 */
 
-int need_more(const int *city_count, int prod1, int prod2) {
+static int need_more(const int *city_count, int prod1, int prod2) {
 	if (city_count[prod1] * ratio[prod2] <=
 	    city_count[prod2] * ratio[prod1])
 		return (prod1);
@@ -345,8 +364,8 @@ Figure out the most needed type of production.  We are passed
 a flag telling us if armies are ok to produce.
 */
 
-void comp_set_needed(city_info_t *cityp, int *city_count, bool army_ok,
-                     bool is_lake) {
+static void comp_set_needed(city_info_t *cityp, int *city_count, bool army_ok,
+	                    bool is_lake) {
 	int best_prod;
 	int prod;
 
@@ -379,7 +398,7 @@ territory will appear as solid water.  Big bodies of water should
 have unexplored territory on the edges.
 */
 
-bool lake(loc_t loc) {
+static bool lake(loc_t loc) {
 	int cont_map[MAP_SIZE];
 	scan_counts_t counts;
 
@@ -394,9 +413,7 @@ bool lake(loc_t loc) {
 Move all computer pieces.
 */
 
-void do_pieces(void) {
-	void cpiece_move(piece_info_t *);
-
+static void do_pieces(void) {
 	int i;
 	piece_info_t *obj, *next_obj;
 
@@ -415,9 +432,7 @@ the loop, we find a direction to move that will take us closer to an
 objective.
 */
 
-void cpiece_move(piece_info_t *obj) {
-	void move1(piece_info_t *);
-
+static void cpiece_move(piece_info_t *obj) {
 	bool changed_loc;
 	int max_hits;
 
@@ -468,10 +483,7 @@ void cpiece_move(piece_info_t *obj) {
 Move a piece one square.
 */
 
-void move1(piece_info_t *obj) {
-	void army_move(piece_info_t *), transport_move(piece_info_t *);
-	void fighter_move(piece_info_t *), ship_move(piece_info_t *);
-
+static void move1(piece_info_t *obj) {
 	switch (obj->type) {
 	case ARMY:
 		army_move(obj);
@@ -517,14 +529,7 @@ attempt to leave the city.
 destination.  (If there is no destination, sit around and wait.)
 */
 
-void army_move(piece_info_t *obj) {
-	loc_t move_away(const view_map_t *, loc_t, const char *);
-	loc_t find_attack(const loc_t, const char *, const char *);
-	void make_army_load_map(const piece_info_t *, view_map_t *, const view_map_t *);
-	void make_unload_map(view_map_t *, const view_map_t *);
-	void make_tt_load_map(view_map_t *, const view_map_t *);
-	void board_ship(piece_info_t *, path_map_t *, loc_t);
-
+static void army_move(piece_info_t *obj) {
 	loc_t new_loc;
 	int cross_cost = 0; /* cost to enter water */
 
@@ -607,7 +612,7 @@ void army_move(piece_info_t *obj) {
 Remove pruned explore locs from a view map.
 */
 
-void unmark_explore_locs(view_map_t *xmap) {
+static void unmark_explore_locs(view_map_t *xmap) {
 	count_t i;
 
 	for (i = 0; i < MAP_SIZE; i++)
@@ -620,7 +625,8 @@ Make a load map.  We copy the view map and mark each loading
 transport and tt producing city with a '$'.
 */
 
-void make_army_load_map(const piece_info_t *obj, view_map_t *xmap, const view_map_t *vmap) {
+static void make_army_load_map(const piece_info_t *obj, view_map_t *xmap,
+	                       const view_map_t *vmap) {
 	piece_info_t *p;
 	int i;
 
@@ -649,13 +655,13 @@ void make_army_load_map(const piece_info_t *obj, view_map_t *xmap, const view_ma
 
 /* Return true if an army is considered near a location for loading. */
 
-bool nearby_load(const piece_info_t *obj, loc_t loc) {
+static bool nearby_load(const piece_info_t *obj, loc_t loc) {
 	return obj->func == 1 && dist(obj->loc, loc) <= 2;
 }
 
 /* Return number of nearby armies. */
 
-count_t nearby_count(loc_t loc) {
+static count_t nearby_count(loc_t loc) {
 	piece_info_t *obj;
 	int count;
 
@@ -669,7 +675,7 @@ count_t nearby_count(loc_t loc) {
 
 /* Make load map for a ship. */
 
-void make_tt_load_map(view_map_t *xmap, const view_map_t *vmap) {
+static void make_tt_load_map(view_map_t *xmap, const view_map_t *vmap) {
 	piece_info_t *p;
 
 	(void)memcpy(xmap, vmap, sizeof(view_map_t) * MAP_SIZE);
@@ -710,7 +716,7 @@ b)  if enemy_cities == 1 && total_cities == 1, set number to 2.
 c)  Any other attackable city is marked with a '0'.
 */
 
-void make_unload_map(view_map_t *xmap, const view_map_t *vmap) {
+static void make_unload_map(view_map_t *xmap, const view_map_t *vmap) {
 	count_t i;
 	scan_counts_t counts;
 
@@ -763,7 +769,7 @@ If that doesn't work, move to the objective, trying to be
 close to the ocean.
 */
 
-void board_ship(piece_info_t *obj, path_map_t *pmap, loc_t dest) {
+static void board_ship(piece_info_t *obj, path_map_t *pmap, loc_t dest) {
 	if (!load_army(obj)) {
 		obj->func = 1; /* loading */
 		move_objective(obj, pmap, dest, "t.");
@@ -776,7 +782,7 @@ Prefer switching to staying.  If we switch, we force
 one of the ships to become more full.
 */
 
-piece_info_t *find_best_tt(piece_info_t *best, loc_t loc, int owner) {
+static piece_info_t *find_best_tt(piece_info_t *best, loc_t loc, int owner) {
 	piece_info_t *p;
 
 	for (p = game.real_map[loc].objp; p != NULL; p = p->loc_link.next)
@@ -794,7 +800,7 @@ piece_info_t *find_best_tt(piece_info_t *best, loc_t loc, int owner) {
 Load an army onto the most full non-full ship.
 */
 
-bool load_army(piece_info_t *obj) {
+static bool load_army(piece_info_t *obj) {
 	piece_info_t *p;
 	int i;
 
@@ -826,7 +832,8 @@ Return the first location we find adjacent to the current location of
 the correct terrain.
 */
 
-loc_t move_away(const view_map_t *vmap, loc_t loc, const char *terrain) {
+static loc_t move_away(const view_map_t *vmap, loc_t loc,
+	               const char *terrain) {
 	int i;
 
 	for (i = 0; i < 8; i++) {
@@ -847,7 +854,8 @@ If there is an object we can attack, we return the location of the
 best of these.
 */
 
-loc_t find_attack(const loc_t loc, const char *obj_list, const char *terrain) {
+static loc_t find_attack(loc_t loc, const char *obj_list,
+	                const char *terrain) {
 	loc_t best_loc;
 	int i, best_val;
 	const char *p;
@@ -882,7 +890,7 @@ An empty transport is willing to attack adjacent enemy transports.
 Transports become 'loading' when empty, and 'unloading' when full.
 */
 
-void transport_move(piece_info_t *obj) {
+static void transport_move(piece_info_t *obj) {
 	loc_t new_loc;
 
 	/* empty transports can attack */
@@ -932,7 +940,7 @@ if there is one in range.
 3)  Otherwise, look for an objective.
 */
 
-void fighter_move(piece_info_t *obj) {
+static void fighter_move(piece_info_t *obj) {
 	loc_t new_loc;
 
 	new_loc = find_attack(obj->loc, fighter_attack, ".+");
@@ -963,7 +971,7 @@ Attack anything adjacent.  If nothing adjacent, explore or look for
 something to attack.
 */
 
-void ship_move(piece_info_t *obj) {
+static void ship_move(piece_info_t *obj) {
 	loc_t new_loc;
 	char *adj_list;
 
@@ -1001,8 +1009,8 @@ void ship_move(piece_info_t *obj) {
 Move to an objective.
 */
 
-void move_objective(piece_info_t *obj, path_map_t pathmap[], loc_t new_loc,
-                    char *adj_list) {
+static void move_objective(piece_info_t *obj, path_map_t pathmap[],
+	                   loc_t new_loc, char *adj_list) {
 	const char *terrain;
 	int d;
 	bool reuse; /* true iff we should reuse old game.real_map */
@@ -1127,7 +1135,7 @@ the game is over.  If the computer has less than half as many cities
 and armies as the user, then the computer will give up.
 */
 
-void check_endgame(void) {
+static void check_endgame(void) {
 	int nuser_city, ncomp_city;
 	int nuser_army, ncomp_army;
 	const piece_info_t *p;

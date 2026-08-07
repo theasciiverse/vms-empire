@@ -20,13 +20,18 @@ game.c -- Routines to initialize, save, and restore a game.
 #include <string.h>
 #include <unistd.h>
 
-count_t remove_land(loc_t loc, count_t num_land);
-bool select_cities(void);
-bool find_next(loc_t *mapi);
-bool good_cont(loc_t mapi);
-bool xread(FILE *f, char *buf, unsigned int size);
-bool xwrite(FILE *f, const char *buf, unsigned int size);
-void stat_display(const char *mbuf, int round);
+static void make_map(void);
+static void place_cities(void);
+static count_t regen_land(count_t placed);
+static count_t remove_land(loc_t loc, count_t num_land);
+static bool select_cities(void);
+static void find_cont(void);
+static bool find_next(loc_t *mapi);
+static bool good_cont(loc_t mapi);
+static void make_pair(void);
+static bool xread(FILE *f, char *buf, unsigned int size);
+static bool xwrite(FILE *f, const char *buf, unsigned int size);
+static void stat_display(const char *mbuf, int round);
 
 static int *height[2];
 static loc_t *land;
@@ -77,8 +82,6 @@ pieces on the board.
 */
 
 void init_game(void) {
-	void make_map(void), place_cities(void);
-
 	count_t i;
 
 	kill_display(); /* nothing on screen */
@@ -140,7 +143,7 @@ at program start up.
 
 static int height_count[MAX_HEIGHT + 1];
 
-void make_map(void) {
+static void make_map(void) {
 	int from, to, k, water_line;
 	count_t i, j, sum, playable, target_water, water_at_line;
 	loc_t loc;
@@ -238,9 +241,7 @@ list until all the cities are placed.  After each choice of a land cell
 for a city, we remove land cells which are too close to the city.
 */
 
-void place_cities(void) {
-	count_t regen_land(count_t);
-
+static void place_cities(void) {
 	count_t placed;
 	count_t num_land;
 
@@ -279,7 +280,7 @@ put all land in the list, decrement the min_city_dist, and then
 remove any land which is too close to a city.
 */
 
-count_t regen_land(count_t placed) {
+static count_t regen_land(count_t placed) {
 	count_t num_land;
 	count_t i;
 
@@ -305,7 +306,7 @@ count_t regen_land(count_t placed) {
 Remove land that is too close to a city.
 */
 
-count_t remove_land(loc_t loc, count_t num_land) {
+static count_t remove_land(loc_t loc, count_t num_land) {
 	count_t new, i;
 
 	new = 0; /* nothing kept yet */
@@ -367,9 +368,7 @@ static cont_t cont_tab[MAX_CONT]; /* list of good continenets */
 static int rank_tab[MAX_CONT];    /* indices to cont_tab in order of rank */
 static pair_t pair_tab[MAX_CONT * MAX_CONT]; /* ranked pairs of continents */
 
-bool select_cities(void) {
-	void find_cont(void), make_pair(void);
-
+static bool select_cities(void) {
 	loc_t compi;
 	city_info_t *compp, *userp;
 	int comp_cont, user_cont;
@@ -424,7 +423,7 @@ Find all continents with 2 cities or more, one of which must be a shore
 city.  We rank the continents.
 */
 
-void find_cont(void) {
+static void find_cont(void) {
 	loc_t i;
 	loc_t mapi;
 
@@ -446,7 +445,7 @@ Find the next continent and insert it in the rank table.
 If there are no more continents, we return false.
 */
 
-bool find_next(loc_t *mapi) {
+static bool find_next(loc_t *mapi) {
 	count_t i;
 	long val;
 
@@ -486,7 +485,7 @@ continent and return true.  Otherwise we return false.
 static count_t ncity, nland, nshore;
 static void mark_cont(loc_t);
 
-bool good_cont(loc_t mapi) {
+static bool good_cont(loc_t mapi) {
 	long val;
 
 	ncity = 0; /* nothing seen yet */
@@ -567,7 +566,7 @@ win with.  Our ranking is simply based on the difference in value
 between the user's continent and the computer's continent.
 */
 
-void make_pair(void) {
+static void make_pair(void) {
 	int i, j, k, npair;
 	long val;
 
@@ -1322,7 +1321,7 @@ Write a buffer to a file.  If we cannot write everything, return false.
 Also, tell the user why the write did not work if it didn't.
 */
 
-bool xwrite(FILE *f, const char *buf, unsigned int size) {
+static bool xwrite(FILE *f, const char *buf, unsigned int size) {
 	size_t bytes;
 
 	bytes = fwrite(buf, 1, size, f);
@@ -1342,7 +1341,7 @@ Read a buffer from a file.  If the read fails, we tell the user why
 and return false.
 */
 
-bool xread(FILE *f, char *buf, unsigned int size) {
+static bool xread(FILE *f, char *buf, unsigned int size) {
 	size_t bytes;
 
 	bytes = fread(buf, 1, size, f);
@@ -1468,7 +1467,7 @@ The "xxxxx" field is the cumulative cost of building the hardware.
 /* in declared order, with city first */
 static char *pieces = "OAFPDSTCBZXafpdstcbz";
 
-void stat_display(const char *mbuf, int round) {
+static void stat_display(const char *mbuf, int round) {
 	count_t i;
 	int counts[2 * NUM_OBJECTS + 2];
 	int user_cost, comp_cost;

@@ -27,7 +27,13 @@ if any.
 #include "empire.h"
 #include "extern.h"
 
-void attack_city(piece_info_t *att_obj, loc_t loc) {
+static void attack_city(piece_info_t *att_obj, loc_t loc);
+static void attack_obj(piece_info_t *att_obj, loc_t loc);
+static void survive(piece_info_t *obj, loc_t loc);
+static void describe(piece_info_t *win_obj, piece_info_t *lose_obj,
+	             loc_t loc);
+
+static void attack_city(piece_info_t *att_obj, loc_t loc) {
 	city_info_t *cityp;
 	int att_owner, city_owner;
 
@@ -85,10 +91,7 @@ Attack a piece other than a city.  The piece could be anyone's.
 First we have to figure out what is being attacked.
 */
 
-void attack_obj(piece_info_t *att_obj, loc_t loc) {
-	void describe(piece_info_t *, piece_info_t *, loc_t);
-	void survive(piece_info_t *, loc_t);
-
+static void attack_obj(piece_info_t *att_obj, loc_t loc) {
 	piece_info_t *def_obj; /* defender */
 	int owner;
 
@@ -138,7 +141,7 @@ fall overboard and drown.  We also move the survivor to the given
 location.
 */
 
-void survive(piece_info_t *obj, loc_t loc) {
+static void survive(piece_info_t *obj, loc_t loc) {
 	while (obj_capacity(obj) < obj->count) {
 		kill_obj(obj->cargo, loc);
 	}
@@ -146,7 +149,8 @@ void survive(piece_info_t *obj, loc_t loc) {
 	move_obj(obj, loc);
 }
 
-void describe(piece_info_t *win_obj, piece_info_t *lose_obj, loc_t loc) {
+static void describe(piece_info_t *win_obj, piece_info_t *lose_obj,
+	             loc_t loc) {
 	char buf[STRSIZE];
 	char buf2[STRSIZE];
 

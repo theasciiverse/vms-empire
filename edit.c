@@ -18,19 +18,32 @@ edit.c -- Routines to handle edit mode commands.
 #include "empire.h"
 #include "extern.h"
 
-void e_move(loc_t *path_start, loc_t loc);
+static char e_cursor(loc_t *edit_cursor);
+static void e_leave(void);
+static void e_print(loc_t *edit_cursor);
+static void e_set_func(loc_t loc, long func);
+static void e_set_city_func(city_info_t *cityp, int type, long func);
+static void e_random(loc_t loc);
+static void e_fill(loc_t loc);
+static void e_explore(loc_t loc);
+static void e_land(loc_t loc);
+static void e_transport(loc_t loc);
+static void e_attack(loc_t loc);
+static void e_repair(loc_t loc);
+static void e_stasis(loc_t loc);
+static void e_wake(loc_t loc);
+static void e_city_func(loc_t *path_start, loc_t loc, int *path_type);
+static void e_move(loc_t *path_start, loc_t loc);
+static void e_end(loc_t *path_start, loc_t loc, int path_type);
+static void e_sleep(loc_t loc);
+static void e_info(loc_t edit_cursor);
+static void e_piece_info(loc_t edit_cursor, char ab);
+static void e_city_info(loc_t edit_cursor);
+static void e_prod(loc_t loc);
+static void e_help(void);
 extern int get_piece_name(void);
 
 void edit(loc_t edit_cursor) {
-	char e_cursor(loc_t *);
-	void e_leave(void), e_print(loc_t *), e_random(loc_t);
-	void e_stasis(loc_t), e_end(loc_t *, loc_t, int);
-	void e_wake(loc_t), e_sleep(loc_t);
-	void e_info(loc_t), e_prod(loc_t), e_help(void), e_explore(loc_t);
-	void e_fill(loc_t), e_land(loc_t), e_transport(loc_t);
-	void e_city_func(loc_t *, loc_t, int *);
-	void e_attack(loc_t), e_repair(loc_t);
-
 	loc_t path_start;
 	int path_type = NOPIECE;
 
@@ -124,7 +137,7 @@ This routine is an attempt to make cursor movement reasonably
 fast.
 */
 
-char e_cursor(loc_t *edit_cursor) {
+static char e_cursor(loc_t *edit_cursor) {
 	chtype e;
 
 	/* set up terminal */
@@ -155,13 +168,13 @@ char e_cursor(loc_t *edit_cursor) {
 Leave edit mode.
 */
 
-void e_leave(void) { comment("Exiting edit mode."); }
+static void e_leave(void) { comment("Exiting edit mode."); }
 
 /*
 Print new sector.
 */
 
-void e_print(loc_t *edit_cursor) {
+static void e_print(loc_t *edit_cursor) {
 	int sector;
 
 	sector = get_range("New Sector? ", 0, NUM_SECTORS - 1);
@@ -175,7 +188,7 @@ void e_print(loc_t *edit_cursor) {
 Set the function of a piece.
 */
 
-void e_set_func(loc_t loc, long func) {
+static void e_set_func(loc_t loc, long func) {
 	piece_info_t *obj;
 	obj = find_obj_at_loc(loc);
 	if (obj != NULL && obj->owner == USER) {
@@ -191,7 +204,7 @@ void e_set_func(loc_t loc, long func) {
 
 /* Set the function of a city for some piece. */
 
-void e_set_city_func(city_info_t *cityp, int type, long func) {
+static void e_set_city_func(city_info_t *cityp, int type, long func) {
 	ASSERT(cityp != NULL);
 
 	// cppcheck-suppress nullPointerRedundantCheck
@@ -202,7 +215,7 @@ void e_set_city_func(city_info_t *cityp, int type, long func) {
 Set a piece to move randomly.
 */
 
-void e_random(loc_t loc) { e_set_func(loc, RANDOM); }
+static void e_random(loc_t loc) { e_set_func(loc, RANDOM); }
 
 void e_city_random(city_info_t *cityp, int type) {
 	e_set_city_func(cityp, type, RANDOM);
@@ -212,7 +225,7 @@ void e_city_random(city_info_t *cityp, int type) {
 Put a ship in fill mode.
 */
 
-void e_fill(loc_t loc) {
+static void e_fill(loc_t loc) {
 	if (game.user_map[loc].contents == 'T' ||
 	    game.user_map[loc].contents == 'C') {
 		e_set_func(loc, FILL);
@@ -233,7 +246,7 @@ void e_city_fill(city_info_t *cityp, int type) {
 Set a piece to explore.
 */
 
-void e_explore(loc_t loc) { e_set_func(loc, EXPLORE); }
+static void e_explore(loc_t loc) { e_set_func(loc, EXPLORE); }
 
 void e_city_explore(city_info_t *cityp, loc_t type) {
 	e_set_city_func(cityp, type, EXPLORE);
@@ -243,7 +256,7 @@ void e_city_explore(city_info_t *cityp, loc_t type) {
 Set a fighter to land.
 */
 
-void e_land(loc_t loc) {
+static void e_land(loc_t loc) {
 	if (game.user_map[loc].contents == 'F') {
 		e_set_func(loc, LAND);
 	} else {
@@ -255,7 +268,7 @@ void e_land(loc_t loc) {
 Set an army's function to TRANSPORT.
 */
 
-void e_transport(loc_t loc) {
+static void e_transport(loc_t loc) {
 	if (game.user_map[loc].contents == 'A') {
 		e_set_func(loc, WFTRANSPORT);
 	} else {
@@ -267,7 +280,7 @@ void e_transport(loc_t loc) {
 Set an army's function to ATTACK.
 */
 
-void e_attack(loc_t loc) {
+static void e_attack(loc_t loc) {
 	if (game.user_map[loc].contents == 'A') {
 		e_set_func(loc, ARMYATTACK);
 	} else {
@@ -287,7 +300,7 @@ void e_city_attack(city_info_t *cityp, int type) {
 Set a ship's function to REPAIR.
 */
 
-void e_repair(loc_t loc) {
+static void e_repair(loc_t loc) {
 	if (strchr("PDSTBC", game.user_map[loc].contents)) {
 		e_set_func(loc, REPAIR);
 	} else {
@@ -309,7 +322,7 @@ Set object to move in a direction.
 
 static char dirs[] = "WEDCXZAQ";
 
-void e_stasis(loc_t loc) {
+static void e_stasis(loc_t loc) {
 	if (!isupper((unsigned char)game.user_map[loc].contents)) {
 		huh(); /* no object here */
 	} else if (game.user_map[loc].contents == 'X') {
@@ -344,7 +357,7 @@ void e_city_stasis(city_info_t *cityp, int type) {
 Wake up anything and everything.
 */
 
-void e_wake(loc_t loc) {
+static void e_wake(loc_t loc) {
 	city_info_t *cityp;
 	piece_info_t *obj;
 
@@ -372,7 +385,7 @@ Set a city's function.  We get the piece type to set, then
 the function itself.
 */
 
-void e_city_func(loc_t *path_start, loc_t loc, int *path_type) {
+static void e_city_func(loc_t *path_start, loc_t loc, int *path_type) {
 	int type;
 	char e;
 	city_info_t *cityp;
@@ -427,7 +440,7 @@ void e_city_func(loc_t *path_start, loc_t loc, int *path_type) {
 Beginning of move to location.
 */
 
-void e_move(loc_t *path_start, loc_t loc) {
+static void e_move(loc_t *path_start, loc_t loc) {
 	if (!isupper((unsigned char)game.user_map[loc].contents)) {
 		huh(); /* nothing there? */
 	} else if (game.user_map[loc].contents == 'X') {
@@ -441,7 +454,7 @@ void e_move(loc_t *path_start, loc_t loc) {
 End of move to location.
 */
 
-void e_end(loc_t *path_start, loc_t loc, int path_type) {
+static void e_end(loc_t *path_start, loc_t loc, int path_type) {
 	if (*path_start == -1) {
 		huh(); /* no path started? */
 	} else if (path_type == NOPIECE) {
@@ -459,7 +472,7 @@ void e_end(loc_t *path_start, loc_t loc, int path_type) {
 Put a piece to sleep.
 */
 
-void e_sleep(loc_t loc) {
+static void e_sleep(loc_t loc) {
 	if (game.user_map[loc].contents == 'O') {
 		huh(); /* can't sleep a city */
 	} else {
@@ -471,9 +484,7 @@ void e_sleep(loc_t loc) {
 Print out information about a piece.
 */
 
-void e_info(loc_t edit_cursor) {
-	void e_city_info(loc_t), e_piece_info(loc_t edit_cursor, char ab);
-
+static void e_info(loc_t edit_cursor) {
 	char ab;
 
 	ab = game.user_map[edit_cursor].contents;
@@ -504,7 +515,7 @@ void e_info(loc_t edit_cursor) {
 Print info about a piece.
 */
 
-void e_piece_info(loc_t edit_cursor, char ab) {
+static void e_piece_info(loc_t edit_cursor, char ab) {
 	piece_info_t *obj;
 	int type;
 	const char *p;
@@ -522,7 +533,7 @@ void e_piece_info(loc_t edit_cursor, char ab) {
 Display info on a city.
 */
 
-void e_city_info(loc_t edit_cursor) {
+static void e_city_info(loc_t edit_cursor) {
 	const piece_info_t *obj;
 	city_info_t *cityp;
 	int f, s;
@@ -613,7 +624,7 @@ void e_city_info(loc_t edit_cursor) {
 Change city production.
 */
 
-void e_prod(loc_t loc) {
+static void e_prod(loc_t loc) {
 	city_info_t *cityp;
 
 	cityp = find_city(loc);
@@ -629,7 +640,7 @@ void e_prod(loc_t loc) {
 get help
 */
 
-void e_help(void) {
+static void e_help(void) {
 	help(help_edit, edit_lines);
 	prompt("Press any key to continue: ");
 	(void)get_chx();

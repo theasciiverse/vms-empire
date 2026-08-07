@@ -17,6 +17,9 @@ object.c -- routines for manipulating objects.
 #include <string.h>
 
 extern int get_piece_name(void);
+static void kill_one(piece_info_t **list, piece_info_t *obj);
+static void scan_sat(view_map_t vmap[], loc_t loc);
+static void update(view_map_t vmap[], loc_t loc);
 
 /*
 Find the nearest city to a location.  Return the location
@@ -171,8 +174,6 @@ anything in the object, it is killed as well.
 */
 
 void kill_obj(piece_info_t *obj, loc_t loc) {
-	void kill_one(piece_info_t **, piece_info_t *);
-
 	piece_info_t **list;
 	view_map_t *vmap;
 
@@ -188,7 +189,7 @@ void kill_obj(piece_info_t *obj, loc_t loc) {
 
 /* kill an object without scanning */
 
-void kill_one(piece_info_t **list, piece_info_t *obj) {
+static void kill_one(piece_info_t **list, piece_info_t *obj) {
 	UNLINK(list[obj->type], obj,
 	       piece_link); /* unlink obj from all lists */
 	UNLINK(game.real_map[obj->loc].objp, obj, loc_link);
@@ -516,8 +517,6 @@ on top.
 */
 
 void scan(view_map_t vmap[], loc_t loc) {
-	void update(view_map_t[], loc_t), check(void);
-
 	int i;
 
 #ifdef DEBUG
@@ -546,7 +545,7 @@ static int wrap_sat_coordinate(int coordinate, int dimension) {
 	return coordinate + 1;
 }
 
-void scan_sat(view_map_t vmap[], loc_t loc) {
+static void scan_sat(view_map_t vmap[], loc_t loc) {
 	static const int row_delta[8] = {-2, -2, 0, 2, 2, 2, 0, -2};
 	static const int col_delta[8] = {0, 2, 2, 2, 0, -2, -2, -2};
 	int i;
@@ -577,7 +576,7 @@ city type.
 
 char city_char[] = {MAP_CITY, 'O', 'X'};
 
-void update(view_map_t vmap[], loc_t loc) {
+static void update(view_map_t vmap[], loc_t loc) {
 	vmap[loc].seen = game.date;
 
 	if (game.real_map[loc].cityp) /* is there a city here? */

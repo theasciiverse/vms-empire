@@ -99,7 +99,6 @@ void vmap_mark_adjacent(path_map_t path_map[], long loc);
 void vmap_mark_near_path(path_map_t path_map[], long loc);
 long vmap_find_dir(path_map_t path_map[], view_map_t *vmap, long loc,
                    const char *terrain, const char *adjchar);
-int vmap_count_adjacent(const view_map_t *vmap, long loc, const char *adj_char);
 bool vmap_shore(const view_map_t *vmap, long loc);
 bool rmap_shore(long loc);
 bool vmap_at_sea(const view_map_t *vmap, long loc);
@@ -123,9 +122,6 @@ void print_zoom(view_map_t *vmap);
 void print_pzoom(char *s, path_map_t *pmap, view_map_t *vmap);
 void print_xzoom(view_map_t *vmap);
 void display_score(void);
-#ifdef A_COLOR
-void init_colors(void);
-#endif /* A_COLOR */
 void redraw(void);
 void clear_screen(void);
 void complain(void);
@@ -141,11 +137,9 @@ void save_movie_screen(void);
 void replay_movie(void);
 
 bool get_str(char *buf, int sizep); /* input routines */
-bool get_strq(char *buf, int sizep);
 unsigned char get_chx(void);
 int getint(char *message);
 unsigned char get_c(void);
-unsigned char get_cq(void);
 bool getyn(char *message);
 int get_range(char *message, int low, int high);
 
@@ -173,7 +167,6 @@ void embark(piece_info_t *ship, piece_info_t *obj);
 void disembark(piece_info_t *obj);
 void describe_obj(piece_info_t *obj);
 void scan(view_map_t vmap[], long loc);
-void scan_sat(view_map_t *vmap, long loc);
 void set_prod(city_info_t *cityp);
 
 /* terminal routines */

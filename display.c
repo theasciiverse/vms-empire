@@ -33,6 +33,11 @@ static void show_loc(view_map_t vmap[], loc_t loc);
 static void disp_square(view_map_t *vp);
 static void disp_city_prod(loc_t t);
 static bool on_screen(loc_t loc);
+static void display_screen(view_map_t vmap[]);
+static void print_zoom_cell(view_map_t *vmap, int row, int col, int row_inc,
+	                    int col_inc);
+static void print_pzoom_cell(path_map_t *pmap, view_map_t *vmap, int row,
+	                     int col, int row_inc, int col_inc);
 
 /* Convert between playable map coordinates and wrapped screen offsets. */
 
@@ -93,7 +98,7 @@ loc_t sector_loc(int sector) {
 }
 
 #ifdef A_COLOR
-void init_colors(void) {
+static void init_colors(void) {
 	start_color();
 
 	init_pair(COLOR_BLACK, COLOR_BLACK, COLOR_BLACK);
@@ -280,8 +285,6 @@ screen.
 void print_sector(int whose, view_map_t vmap[], int sector)
 /* whose is USER or COMP, vmap is map to display, sector is sector to display */
 {
-	void display_screen(view_map_t[]);
-
 	int first_row, first_col, last_row, last_col;
 	int sector_rows, sector_cols;
 	int display_rows, display_cols;
@@ -453,7 +456,7 @@ static void disp_city_prod(loc_t t) {
 Display the portion of the map that appears on the screen.
 */
 
-void display_screen(view_map_t vmap[]) {
+static void display_screen(view_map_t vmap[]) {
 	int display_rows, display_cols;
 	int r, c, display_row, display_col;
 	loc_t t;
@@ -565,8 +568,6 @@ Print a condensed version of the map.
 char zoom_list[] = "XO*tcbsdpfaTCBSDPFAzZ+. ";
 
 void print_zoom(view_map_t *vmap) {
-	void print_zoom_cell(view_map_t *, int, int, int, int);
-
 	int row_inc, col_inc;
 	int r, c;
 
@@ -591,8 +592,8 @@ void print_zoom(view_map_t *vmap) {
 Print a single cell in condensed format.
 */
 
-void print_zoom_cell(view_map_t *vmap, int row, int col, int row_inc,
-                     int col_inc) {
+static void print_zoom_cell(view_map_t *vmap, int row, int col, int row_inc,
+	                    int col_inc) {
 	int r, c;
 	char cell;
 
@@ -616,8 +617,6 @@ Print a condensed version of a pathmap.
 */
 
 void print_pzoom(char *s, path_map_t *pmap, view_map_t *vmap) {
-	void print_pzoom_cell(path_map_t *, view_map_t *, int, int, int, int);
-
 	int row_inc, col_inc;
 	int r, c;
 
@@ -648,8 +647,8 @@ a value of INFINITY are printed with 'Z'.  Squares with a value
 between P and Z are printed as U.
 */
 
-void print_pzoom_cell(path_map_t *pmap, view_map_t *vmap, int row, int col,
-                      int row_inc, int col_inc) {
+static void print_pzoom_cell(path_map_t *pmap, view_map_t *vmap, int row,
+	                     int col, int row_inc, int col_inc) {
 	int r, c;
 	int sum, d;
 	char cell;

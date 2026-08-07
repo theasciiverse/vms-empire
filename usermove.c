@@ -16,15 +16,48 @@ usermove.c -- Let the user move her troops.
 #include <stdio.h>
 #include <string.h>
 
-void fatal(piece_info_t *obj, loc_t loc, char *message, char *response);
-void move_to_dest(piece_info_t *obj, loc_t dest);
-void move_army_to_city(piece_info_t *obj, loc_t city_loc);
-bool awake(piece_info_t *obj);
+static void piece_move(piece_info_t *obj);
+static void move_random(piece_info_t *obj);
+static void move_explore(piece_info_t *obj);
+static void move_transport(piece_info_t *obj);
+static void move_armyload(piece_info_t *obj);
+static void move_armyattack(piece_info_t *obj);
+static void move_ttload(piece_info_t *obj);
+static void move_repair(piece_info_t *obj);
+static void move_fill(piece_info_t *obj);
+static void move_land(piece_info_t *obj);
+static void move_dir(piece_info_t *obj);
+static void move_path(piece_info_t *obj);
+static void move_to_dest(piece_info_t *obj, loc_t dest);
+static void ask_user(piece_info_t *obj);
+static void reset_func(piece_info_t *obj);
+static void user_skip(piece_info_t *obj);
+static void user_fill(piece_info_t *obj);
+static void user_help(void);
+static void user_set_dir(piece_info_t *obj);
+static void user_wake(piece_info_t *obj);
+static void user_random(piece_info_t *obj);
+static void user_sentry(piece_info_t *obj);
+static void user_land(piece_info_t *obj);
+static void user_explore(piece_info_t *obj);
+static void user_transport(piece_info_t *obj);
+static void user_armyattack(piece_info_t *obj);
+static void user_repair(piece_info_t *obj);
+static void user_set_city_func(const piece_info_t *obj);
+static void user_build(const piece_info_t *obj);
+static void user_dir(piece_info_t *obj, int dir);
+static void user_dir_army(piece_info_t *obj, loc_t loc);
+static void user_dir_fighter(piece_info_t *obj, loc_t loc);
+static void user_dir_ship(piece_info_t *obj, loc_t loc);
+static void move_army_to_city(piece_info_t *obj, loc_t city_loc);
+static void user_cancel_auto(void);
+static void user_redraw(void);
+static bool awake(piece_info_t *obj);
+static void fatal(piece_info_t *obj, loc_t loc, char *message,
+	          char *response);
 extern int get_piece_name(void);
 
 void user_move(void) {
-	void piece_move(piece_info_t *);
-
 	int i, j, sec_start;
 	piece_info_t *obj, *next_obj;
 	int prod;
@@ -119,14 +152,7 @@ Then we attempt to handle any preprogrammed function for the piece.  If
 the piece has not moved after this, we ask the user what to do.
 */
 
-void piece_move(piece_info_t *obj) {
-	void move_random(piece_info_t *), move_fill(piece_info_t *);
-	void move_land(piece_info_t *), move_explore(piece_info_t *);
-	void move_path(piece_info_t *), move_dir(piece_info_t *);
-	void move_armyload(piece_info_t *), ask_user(piece_info_t *);
-	void move_armyattack(piece_info_t *), move_ttload(piece_info_t *);
-	void move_repair(piece_info_t *), move_transport(piece_info_t *);
-
+static void piece_move(piece_info_t *obj) {
 	bool changed_loc;
 	int speed, max_hits;
 	bool need_input;
@@ -256,7 +282,7 @@ the piece can move.  If there are none, we do nothing, otherwise we
 move the piece to a random adjacent square.
 */
 
-void move_random(piece_info_t *obj) {
+static void move_random(piece_info_t *obj) {
 	loc_t loc_list[8];
 	int i, nloc;
 
@@ -283,7 +309,7 @@ which the piece can reach and have to piece move toward the
 territory.
 */
 
-void move_explore(piece_info_t *obj) {
+static void move_explore(piece_info_t *obj) {
 	path_map_t path_map[MAP_SIZE];
 	loc_t loc;
 	const char *terrain;
@@ -327,7 +353,7 @@ army to find a non-full transport.  If one is present, we move the
 army to the transport and waken the army.
 */
 
-void move_transport(piece_info_t *obj) {
+static void move_transport(piece_info_t *obj) {
 	loc_t loc;
 
 	/* look for an adjacent transport */
@@ -347,7 +373,7 @@ If there is an adjacent transport, move the army onto
 the transport, and awaken the army.
 */
 
-void move_armyload(piece_info_t *obj) {
+static void move_armyload(piece_info_t *obj) {
 	view_map_t amap[MAP_SIZE];
 	loc_t loc;
 	piece_info_t *p;
@@ -401,7 +427,7 @@ void move_armyload(piece_info_t *obj) {
 Move an army toward an attackable city or enemy army.
 */
 
-void move_armyattack(piece_info_t *obj) {
+static void move_armyattack(piece_info_t *obj) {
 	path_map_t path_map[MAP_SIZE];
 	loc_t loc;
 
@@ -421,13 +447,13 @@ void move_armyattack(piece_info_t *obj) {
 	}
 }
 
-void move_ttload(piece_info_t *obj) { ABORT; }
+static void move_ttload(piece_info_t *obj) { ABORT; }
 
 /*
 Move a ship toward port.  If the ship is healthy, wake it up.
 */
 
-void move_repair(piece_info_t *obj) {
+static void move_repair(piece_info_t *obj) {
 	path_map_t path_map[MAP_SIZE];
 	loc_t loc;
 
@@ -464,7 +490,7 @@ object is not full, we set the move count to its maximum value.
 Otherwise we awaken the object.
 */
 
-void move_fill(piece_info_t *obj) {
+static void move_fill(piece_info_t *obj) {
 	if (obj->count == obj_capacity(obj)) { /* full? */
 		obj->func = NOFUNC;            /* awaken full boat */
 	} else {
@@ -479,7 +505,7 @@ for the closest available one.  We then move toward that item's location.
 The nearest landing field must be within the object's range.
 */
 
-void move_land(piece_info_t *obj) {
+static void move_land(piece_info_t *obj) {
 	long best_dist;
 	loc_t best_loc;
 	const piece_info_t *p;
@@ -511,7 +537,7 @@ If the object is a fighter which has travelled for half its range,
 we wake it up.
 */
 
-void move_dir(piece_info_t *obj) {
+static void move_dir(piece_info_t *obj) {
 	loc_t loc;
 	int dir;
 
@@ -531,7 +557,7 @@ to our destination, and if there is nothing in the way.  If so, we
 move in the first direction we find.
 */
 
-void move_path(piece_info_t *obj) {
+static void move_path(piece_info_t *obj) {
 	if (obj->loc == obj->func) {
 		obj->func = NOFUNC;
 	} else {
@@ -546,7 +572,7 @@ Then we mark the paths to the destination.  Then we choose a
 move.
 */
 
-void move_to_dest(piece_info_t *obj, loc_t dest) {
+static void move_to_dest(piece_info_t *obj, loc_t dest) {
 	path_map_t path_map[MAP_SIZE];
 	int fterrain;
 	const char *mterrain;
@@ -586,17 +612,7 @@ void move_to_dest(piece_info_t *obj, loc_t dest) {
 Ask the user to move her piece.
 */
 
-void ask_user(piece_info_t *obj) {
-	void user_skip(piece_info_t *), user_fill(piece_info_t *);
-	void user_dir(piece_info_t *, int), user_set_dir(piece_info_t *);
-	void user_wake(piece_info_t *), user_set_city_func(const piece_info_t *);
-	void user_cancel_auto(void), user_redraw(void);
-	void user_random(piece_info_t *), user_land(piece_info_t *);
-	void user_sentry(piece_info_t *), user_help(void);
-	void reset_func(piece_info_t *), user_explore(piece_info_t *);
-	void user_build(const piece_info_t *), user_transport(piece_info_t *);
-	void user_armyattack(piece_info_t *), user_repair(piece_info_t *);
-
+static void ask_user(piece_info_t *obj) {
 	for (;;) {
 		char c;
 
@@ -705,7 +721,7 @@ object if necessary because the user only changed the city
 function, and did not tell us what to do with the object.
 */
 
-void reset_func(piece_info_t *obj) {
+static void reset_func(piece_info_t *obj) {
 	city_info_t *cityp;
 
 	cityp = find_city(obj->loc);
@@ -724,7 +740,7 @@ is an army and the army is in a city, move the army to
 the city.
 */
 
-void user_skip(piece_info_t *obj) {
+static void user_skip(piece_info_t *obj) {
 	if (obj->type == ARMY && game.user_map[obj->loc].contents == 'O') {
 		move_army_to_city(obj, obj->loc);
 	} else {
@@ -737,7 +753,7 @@ Put an object in FILL mode.  The object must be either a transport
 or carrier.  If not, we beep at the user.
 */
 
-void user_fill(piece_info_t *obj) {
+static void user_fill(piece_info_t *obj) {
 	if (obj->type != TRANSPORT && obj->type != CARRIER) {
 		complain();
 	} else {
@@ -749,7 +765,7 @@ void user_fill(piece_info_t *obj) {
 Print out help information.
 */
 
-void user_help(void) {
+static void user_help(void) {
 	help(help_user, user_lines);
 	prompt("Press any key to continue: ");
 	(void)get_chx();
@@ -759,7 +775,7 @@ void user_help(void) {
 Set an object's function to move in a certain direction.
 */
 
-void user_set_dir(piece_info_t *obj) {
+static void user_set_dir(piece_info_t *obj) {
 	char c;
 
 	c = get_chx();
@@ -798,25 +814,25 @@ void user_set_dir(piece_info_t *obj) {
 Wake up the current piece.
 */
 
-void user_wake(piece_info_t *obj) { obj->func = NOFUNC; }
+static void user_wake(piece_info_t *obj) { obj->func = NOFUNC; }
 
 /*
 Set the piece's func to random.
 */
 
-void user_random(piece_info_t *obj) { obj->func = RANDOM; }
+static void user_random(piece_info_t *obj) { obj->func = RANDOM; }
 
 /*
 Set a piece's function to sentry.
 */
 
-void user_sentry(piece_info_t *obj) { obj->func = SENTRY; }
+static void user_sentry(piece_info_t *obj) { obj->func = SENTRY; }
 
 /*
 Set a fighter's function to land at the nearest city.
 */
 
-void user_land(piece_info_t *obj) {
+static void user_land(piece_info_t *obj) {
 	if (obj->type != FIGHTER) {
 		complain();
 	} else {
@@ -828,13 +844,13 @@ void user_land(piece_info_t *obj) {
 Set the piece's func to explore.
 */
 
-void user_explore(piece_info_t *obj) { obj->func = EXPLORE; }
+static void user_explore(piece_info_t *obj) { obj->func = EXPLORE; }
 
 /*
 Set an army's function to WFTRANSPORT.
 */
 
-void user_transport(piece_info_t *obj) {
+static void user_transport(piece_info_t *obj) {
 	if (obj->type != ARMY) {
 		complain();
 	} else {
@@ -846,7 +862,7 @@ void user_transport(piece_info_t *obj) {
 Set an army's function to ARMYATTACK.
 */
 
-void user_armyattack(piece_info_t *obj) {
+static void user_armyattack(piece_info_t *obj) {
 	if (obj->type != ARMY) {
 		complain();
 	} else {
@@ -858,7 +874,7 @@ void user_armyattack(piece_info_t *obj) {
 Set a ship's function to REPAIR.
 */
 
-void user_repair(piece_info_t *obj) {
+static void user_repair(piece_info_t *obj) {
 	if (obj->type == ARMY || obj->type == FIGHTER) {
 		complain();
 	} else {
@@ -870,7 +886,7 @@ void user_repair(piece_info_t *obj) {
 Set a city's function.
 */
 
-void user_set_city_func(const piece_info_t *obj) {
+static void user_set_city_func(const piece_info_t *obj) {
 	void e_city_fill(city_info_t *, int);
 	void e_city_explore(city_info_t *, int);
 	void e_city_stasis(city_info_t *, int);
@@ -929,7 +945,7 @@ void user_set_city_func(const piece_info_t *obj) {
 Change a city's production.
 */
 
-void user_build(const piece_info_t *obj) {
+static void user_build(const piece_info_t *obj) {
 	city_info_t *cityp;
 
 	if (game.user_map[obj->loc].contents != 'O') { /* no user city here? */
@@ -946,11 +962,7 @@ Move a piece in the direction specified by the user.
 This routine handles attacking objects.
 */
 
-void user_dir(piece_info_t *obj, int dir) {
-	void user_dir_army(piece_info_t *, loc_t);
-	void user_dir_fighter(piece_info_t *, loc_t);
-	void user_dir_ship(piece_info_t *, loc_t);
-
+static void user_dir(piece_info_t *obj, int dir) {
 	loc_t loc;
 
 	loc = obj->loc + dir_offset[dir];
@@ -984,7 +996,7 @@ unreasonable terrain.  We check for errors, question the user if
 necessary, and attack if necessary.
 */
 
-void user_dir_army(piece_info_t *obj, loc_t loc) {
+static void user_dir_army(piece_info_t *obj, loc_t loc) {
 	if (game.user_map[loc].contents == 'O') { /* attacking own city */
 		move_army_to_city(obj, loc);
 	}
@@ -1054,7 +1066,7 @@ Here we have a fighter wanting to attack something.  There are only
 three cases:  attacking a city, attacking ourself, attacking the enemy.
 */
 
-void user_dir_fighter(piece_info_t *obj, loc_t loc) {
+static void user_dir_fighter(piece_info_t *obj, loc_t loc) {
 	if (game.real_map[loc].contents == MAP_CITY) {
 		fatal(obj, loc,
 		      "That's never worked before, sir.  Do you really want to "
@@ -1082,7 +1094,7 @@ shore.  Our cases are: moving ashore (and subcases), attacking
 a city, attacking self, attacking enemy.
 */
 
-void user_dir_ship(piece_info_t *obj, loc_t loc) {
+static void user_dir_ship(piece_info_t *obj, loc_t loc) {
 	if (game.real_map[loc].contents == MAP_CITY) {
 		char *cur = game.jnkbuf;
 		size_t rem = sizeof(game.jnkbuf);
@@ -1151,7 +1163,7 @@ a non-full transport, we make the move.  Otherwise we ask the user
 if she really wants to attack the city.
 */
 
-void move_army_to_city(piece_info_t *obj, loc_t city_loc) {
+static void move_army_to_city(piece_info_t *obj, loc_t city_loc) {
 	const piece_info_t *tt;
 
 	tt = find_nfull(TRANSPORT, city_loc, obj->owner);
@@ -1172,7 +1184,7 @@ void move_army_to_city(piece_info_t *obj, loc_t city_loc) {
 Cancel game.automove mode.
 */
 
-void user_cancel_auto(void) {
+static void user_cancel_auto(void) {
 	if (!game.automove) {
 		comment("Not in auto mode!");
 	} else {
@@ -1185,7 +1197,7 @@ void user_cancel_auto(void) {
 Redraw the screen.
 */
 
-void user_redraw(void) { redraw(); }
+static void user_redraw(void) { redraw(); }
 
 /*
 Awaken an object if it needs to be.  Normally, objects are awakened
@@ -1196,7 +1208,7 @@ completely awoken here if their function is a destination.  But we
 will return true if we want the user to have control.
 */
 
-bool awake(piece_info_t *obj) {
+static bool awake(piece_info_t *obj) {
 	int i;
 	long t;
 
@@ -1236,7 +1248,8 @@ Question the user about a fatal move.  If the user responds 'y',
 print out the response and kill the object.
 */
 
-void fatal(piece_info_t *obj, loc_t loc, char *message, char *response) {
+static void fatal(piece_info_t *obj, loc_t loc, char *message,
+	          char *response) {
 	if (getyn(message)) {
 		comment(response);
 		kill_obj(obj, loc);

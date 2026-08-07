@@ -17,7 +17,14 @@ parser, and the simple commands.
 
 gamestate_t game;
 
-void c_examine(void), c_movie(void);
+static void do_command(char orders);
+static void c_give(void);
+static void c_debug(char order);
+static void c_quit(void);
+static void c_sector(void);
+static void c_map(void);
+static void c_examine(void);
+static void c_movie(void);
 
 /*
  * 03a 01Apr88 aml .Hacked movement algorithms for computer.
@@ -28,9 +35,6 @@ void c_examine(void), c_movie(void);
  */
 
 void empire(void) {
-	void do_command(char);
-	void print_zoom(view_map_t *);
-
 	char order;
 	int turn = 0;
 
@@ -73,10 +77,7 @@ void empire(void) {
 Execute a command.
 */
 
-void do_command(char orders) {
-	void c_debug(char order), c_quit(void), c_sector(void), c_map(void);
-	void c_give(void);
-
+static void do_command(char orders) {
 	int ncycle;
 
 	switch (orders) {
@@ -209,7 +210,7 @@ a list of unowned cities, choose one at random, and mark
 it as the computers.
 */
 
-void c_give(void) {
+static void c_give(void) {
 	int unowned[NUM_CITY];
 	count_t i, count;
 
@@ -238,7 +239,7 @@ Debugging commands should be implemented here.
 The order cannot be any legal command.
 */
 
-void c_debug(char order) {
+static void c_debug(char order) {
 	char e;
 	int i;
 
@@ -316,7 +317,7 @@ void c_debug(char order) {
 The quit command.  Make sure the user really wants to quit.
 */
 
-void c_quit(void) {
+static void c_quit(void) {
 	if (getyn("QUIT - Are you sure? ")) {
 		empend();
 	}
@@ -327,7 +328,7 @@ Print a sector.  Read the sector number from the user
 and print it.
 */
 
-void c_sector(void) {
+static void c_sector(void) {
 	int num;
 
 	num = get_range("Sector number? ", 0, NUM_SECTORS - 1);
@@ -341,7 +342,7 @@ We print the map sideways to make it easier for the user to print
 out the map.
 */
 
-void c_map(void) {
+static void c_map(void) {
 	FILE *f;
 	int i, j;
 	char line[MAP_HEIGHT + 2];
@@ -379,7 +380,7 @@ void c_map(void) {
 Allow user to examine the computer's map.
 */
 
-void c_examine(void) {
+static void c_examine(void) {
 	int num;
 
 	num = get_range("Sector number? ", 0, NUM_SECTORS - 1);
@@ -391,7 +392,7 @@ We give the computer lots of free moves and
 Print a "zoomed" version of the computer's map.
 */
 
-void c_movie(void) {
+static void c_movie(void) {
 	for (;;) {
 		comp_move(1);
 		print_zoom(game.comp_map);

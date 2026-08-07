@@ -113,12 +113,11 @@ static bool in_free[LIST_SIZE];  /* true if object in free list */
 static bool in_obj[LIST_SIZE];   /* true if object in obj list */
 static bool in_loc[LIST_SIZE];   /* true if object in a loc list */
 static bool in_cargo[LIST_SIZE]; /* true if object in a cargo list */
+static void check_obj(piece_info_t **list, int owner);
+static void check_cargo(piece_info_t *list, int cargo_type);
+static void check_obj_cargo(piece_info_t **list);
 
 void check(void) {
-	void check_cargo(piece_info_t *, int);
-	void check_obj(piece_info_t **, int);
-	void check_obj_cargo(piece_info_t **);
-
 	long i, j;
 	const piece_info_t *p;
 
@@ -212,7 +211,7 @@ Check object lists.  We look for:
 4)  Invalid owners.
 */
 
-void check_obj(piece_info_t **list, int owner) {
+static void check_obj(piece_info_t **list, int owner) {
 	long i, j;
 	const piece_info_t *p;
 
@@ -254,7 +253,7 @@ Check for:
 6)  All cargo is alive.
 */
 
-void check_cargo(piece_info_t *list, int cargo_type) {
+static void check_cargo(piece_info_t *list, int cargo_type) {
 	const piece_info_t *p;
 	const piece_info_t *q;
 	long j;
@@ -288,7 +287,7 @@ pointer appears in a cargo list.  We assume object and cargo
 lists are valid.
 */
 
-void check_obj_cargo(piece_info_t **list) {
+static void check_obj_cargo(piece_info_t **list) {
 	const piece_info_t *p;
 	long i;
 

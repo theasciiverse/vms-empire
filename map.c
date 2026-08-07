@@ -35,6 +35,10 @@ static void expand_prune(view_map_t *, path_map_t *, loc_t, int, perimeter_t *,
 static int objective_cost(const view_map_t *, move_info_t *, loc_t, int);
 static int terrain_type(path_map_t *, const view_map_t *, const move_info_t *, loc_t,
                         loc_t);
+static loc_t vmap_find_xobj(path_map_t path_map[], view_map_t *vmap, loc_t loc,
+	                    move_info_t *move_info, int start, int expand);
+static int vmap_count_adjacent(const view_map_t *vmap, loc_t loc,
+	                       const char *adj_char);
 static void start_perimeter(path_map_t *, perimeter_t *, loc_t, int);
 static void add_cell(path_map_t *, loc_t, perimeter_t *, int, int, int);
 static int vmap_count_path(const path_map_t *, loc_t);
@@ -310,8 +314,8 @@ the information must be consistent with the needs of 'vmap_mark_path'.
 
 /* Find an objective over a single type of terrain. */
 
-loc_t vmap_find_xobj(path_map_t path_map[], view_map_t *vmap, loc_t loc,
-                     move_info_t *move_info, int start, int expand) {
+static loc_t vmap_find_xobj(path_map_t path_map[], view_map_t *vmap, loc_t loc,
+	                    move_info_t *move_info, int start, int expand) {
 	perimeter_t *from;
 	perimeter_t *to;
 	int cur_cost;
@@ -1190,7 +1194,8 @@ Squares are weighted so that the first in the list
 is the most interesting.
 */
 
-int vmap_count_adjacent(const view_map_t *vmap, loc_t loc, const char *adj_char) {
+static int vmap_count_adjacent(const view_map_t *vmap, loc_t loc,
+	                       const char *adj_char) {
 	int i, count;
 	loc_t new_loc;
 	const char *p;

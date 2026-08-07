@@ -40,6 +40,9 @@ to read the lines.  The new information is then displayed, and the
 
 static bool need_delay;
 static FILE *my_stream;
+static void vksend(const char *fmt, va_list varglist);
+static bool get_strq(char *buf, int sizep);
+static unsigned char get_cq(void);
 
 /*
 Here are routines that handle printing to the top few lines of the
@@ -168,7 +171,7 @@ void pdebug(char *fmt, ...) {
 
 /* kermyt begin */
 
-void vksend(const char *fmt, va_list varglist) {
+static void vksend(const char *fmt, va_list varglist) {
 	if (!(my_stream = fopen("info_list.txt", "a"))) {
 		error("Cannot open info_list.txt");
 		return;
@@ -204,7 +207,7 @@ bool get_str(char *buf, int sizep) {
 Get a string from the user, ignoring the current echo mode.
 */
 
-bool get_strq(char *buf, int sizep) {
+static bool get_strq(char *buf, int sizep) {
 	int status;
 
 	if (buf == NULL || sizep <= 0)
@@ -290,7 +293,7 @@ unsigned char get_c(void) {
 Input a character quietly.
 */
 
-char unsigned get_cq(void) {
+static unsigned char get_cq(void) {
 	char c;
 
 	(void)crmode();
