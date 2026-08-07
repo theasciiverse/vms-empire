@@ -169,6 +169,7 @@ long find_transport(int owner, long loc);
 piece_info_t *find_obj_at_loc(long loc);
 int obj_moves(const piece_info_t *obj);
 int obj_capacity(const piece_info_t *obj);
+bool valid_satellite_func(long func);
 void kill_obj(piece_info_t *obj, long loc);
 void kill_city(city_info_t *cityp);
 void produce(city_info_t *cityp);

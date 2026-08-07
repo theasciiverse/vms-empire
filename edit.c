@@ -179,6 +179,10 @@ void e_set_func(loc_t loc, long func) {
 	piece_info_t *obj;
 	obj = find_obj_at_loc(loc);
 	if (obj != NULL && obj->owner == USER) {
+		if (obj->type == SATELLITE && !valid_satellite_func(func)) {
+			huh();
+			return;
+		}
 		obj->func = func;
 		return;
 	}
@@ -353,7 +357,9 @@ void e_wake(loc_t loc) {
 	}
 	for (obj = game.real_map[loc].objp; obj != NULL;
 	     obj = obj->loc_link.next) {
-		obj->func = NOFUNC;
+		if (obj->type != SATELLITE) {
+			obj->func = NOFUNC;
+		}
 	}
 }
 

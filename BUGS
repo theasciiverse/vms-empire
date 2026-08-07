@@ -661,13 +661,6 @@ Bugs found by AI
 
 Line number refer to commit 65dd37.
 
-### High severity
-
-  - Normal edit commands can invalidate satellite movement. Commands such as random, wake,
-    sleep, or cardinal movement overwrite obj->func in edit.c:201 and edit.c:343, while
-    object.c:366 assumes a diagonal movement function and indexes dir_offset without validation.
-    This can index before the array or deliberately abort at an edge.
-
   ### Medium severity
 
   - Saves are written directly over the previous file at game.c:737, and fclose errors are

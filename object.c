@@ -252,6 +252,11 @@ Produce an item for a city.
 
 static int sat_dir[4] = {MOVE_NW, MOVE_SW, MOVE_NE, MOVE_SE};
 
+bool valid_satellite_func(long func) {
+	return func == MOVE_NE || func == MOVE_SE || func == MOVE_SW ||
+	       func == MOVE_NW;
+}
+
 void produce(city_info_t *cityp) {
 	piece_info_t **list;
 	piece_info_t *new;
@@ -368,6 +373,9 @@ static void move_sat1(piece_info_t *obj) {
 	int dir;
 	loc_t new_loc;
 
+	if (!valid_satellite_func(obj->func)) {
+		obj->func = sat_dir[irand(4)];
+	}
 	dir = MOVE_DIR(obj->func);
 	new_loc = obj->loc + dir_offset[dir];
 

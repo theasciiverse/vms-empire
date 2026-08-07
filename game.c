@@ -952,6 +952,10 @@ static bool validate_restore_state(const gamestate_t *state) {
 			fprintf(stderr, "Saved file has invalid object data.\n");
 			goto validate_cleanup;
 		}
+		if (obj->type == SATELLITE && !valid_satellite_func(obj->func)) {
+			fprintf(stderr, "Saved file has invalid satellite movement.\n");
+			goto validate_cleanup;
+		}
 		if (obj->type == TRANSPORT) {
 			cargo_kind = 0;
 		} else if (obj->type == CARRIER) {
