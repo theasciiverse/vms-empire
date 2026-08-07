@@ -273,7 +273,7 @@ void move_random(piece_info_t *obj) {
 	if (nloc == 0) {
 		return; /* no legal move */
 	}
-	i = irand((long)nloc - 1);  /* choose random direction */
+	i = irand((long)nloc);      /* choose random direction */
 	move_obj(obj, loc_list[i]); /* move the piece */
 }
 

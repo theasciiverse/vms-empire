@@ -231,7 +231,7 @@ void place_cities(void) {
 		while (num_land == 0) {
 			num_land = regen_land(placed);
 		}
-		i = irand(num_land - 1); /* select random piece of land */
+		i = irand(num_land); /* select random piece of land */
 		loc = land[i];
 
 		game.city[placed].loc = loc;
