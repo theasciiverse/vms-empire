@@ -1,6 +1,6 @@
 = vms-empire news
 
-Repository::
+1.23: 2026-08-06::
       New -t option makes the map a torus.
       Keep satellite movement functions diagonal
       Keep city placement feasible on custom maps
