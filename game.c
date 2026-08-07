@@ -13,10 +13,12 @@ game.c -- Routines to initialize, save, and restore a game.
 #include "empire.h"
 #include "extern.h"
 #include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 
 count_t remove_land(loc_t loc, count_t num_land);
 bool select_cities(void);
@@ -730,7 +732,11 @@ static bool read_i64(FILE *f, int64_t *v) {
 }
 
 void save_game(void) {
+	static const char temp_suffix[] = ".tmp.XXXXXX";
 	FILE *f; /* file to save game in */
+	char *temp_path;
+	size_t path_len;
+	int fd;
 	bool ok = true;
 	int i, j;
 
@@ -760,9 +766,34 @@ void save_game(void) {
 		goto save_cleanup;                                            \
 	}
 
-	f = fopen(game.savefile, "wb"); /* open for output */
+	path_len = strlen(game.savefile);
+	if (path_len > SIZE_MAX - sizeof(temp_suffix)) {
+		fprintf(stderr, "Save file name is too long.\n");
+		return;
+	}
+	temp_path = malloc(path_len + sizeof(temp_suffix));
+	if (temp_path == NULL) {
+		perror("Cannot allocate temporary save file name");
+		return;
+	}
+	(void)snprintf(temp_path, path_len + sizeof(temp_suffix), "%s%s",
+		       game.savefile, temp_suffix);
+
+	fd = mkstemp(temp_path);
+	if (fd < 0) {
+		perror("Cannot create temporary save file");
+		free(temp_path);
+		return;
+	}
+	f = fdopen(fd, "wb");
 	if (f == NULL) {
-		perror("Cannot save saved game");
+		int saved_errno = errno;
+
+		(void)close(fd);
+		(void)unlink(temp_path);
+		errno = saved_errno;
+		perror("Cannot open temporary save file");
+		free(temp_path);
 		return;
 	}
 
@@ -822,15 +853,31 @@ void save_game(void) {
 	}
 
 save_cleanup:
-	(void)fclose(f);
+	if (ok && fflush(f) != 0) {
+		perror("Cannot flush temporary save file");
+		ok = false;
+	}
+	if (ok && fsync(fileno(f)) != 0) {
+		perror("Cannot sync temporary save file");
+		ok = false;
+	}
+	if (fclose(f) != 0) {
+		perror("Cannot close temporary save file");
+		ok = false;
+	}
+	if (ok && rename(temp_path, game.savefile) != 0) {
+		perror("Cannot replace saved game");
+		ok = false;
+	}
 	if (ok) {
 		topmsg(3, "Game saved.");
 	} else {
-		if (remove(game.savefile) != 0) {
-			perror("Cannot remove partial save file");
+		if (unlink(temp_path) != 0 && errno != ENOENT) {
+			perror("Cannot remove temporary save file");
 		}
 		topmsg(3, "Save failed.");
 	}
+	free(temp_path);
 
 #undef S_WBYTES
 #undef S_WU8
