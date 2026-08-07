@@ -143,7 +143,7 @@ int direction(chtype c);
 
 void init_game(void); /* game routines */
 void save_game(void);
-int restore_game(void);
+bool restore_game(void);
 void save_movie_screen(void);
 void replay_movie(void);
 

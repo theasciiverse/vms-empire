@@ -839,18 +839,241 @@ save_cleanup:
 #undef S_WI64
 }
 
-/*
-Recover a saved game from empire.sav.
-We return true if we succeed, otherwise false.
-*/
+static bool read_embark(piece_info_t *list, int piece_type);
 
-int restore_game(void) {
-	void read_embark(piece_info_t *, int);
+static gamestate_t *new_restore_state(void) {
+	gamestate_t *state = calloc(1, sizeof(*state));
 
-	FILE *f; /* file to save game in */
-	long i;
+	if (state == NULL) {
+		perror("Cannot allocate restore staging state");
+		return NULL;
+	}
+	state->real_map = calloc((size_t)MAP_SIZE, sizeof(*state->real_map));
+	state->comp_map = calloc((size_t)MAP_SIZE, sizeof(*state->comp_map));
+	state->user_map = calloc((size_t)MAP_SIZE, sizeof(*state->user_map));
+	state->city = calloc((size_t)NUM_CITY, sizeof(*state->city));
+	if (state->real_map == NULL || state->comp_map == NULL ||
+	    state->user_map == NULL || state->city == NULL) {
+		perror("Cannot allocate restore staging state");
+		free(state->city);
+		free(state->user_map);
+		free(state->comp_map);
+		free(state->real_map);
+		free(state);
+		return NULL;
+	}
+	state->map_width = MAP_WIDTH;
+	state->map_height = MAP_HEIGHT;
+	state->map_size = MAP_SIZE;
+	state->num_city = NUM_CITY;
+	return state;
+}
+
+static void free_restore_state(gamestate_t *state) {
+	if (state != NULL) {
+		free(state->city);
+		free(state->user_map);
+		free(state->comp_map);
+		free(state->real_map);
+		free(state);
+	}
+}
+
+static bool validate_restore_state(const gamestate_t *state) {
+	unsigned char *city_seen;
+	int *cargo_balance;
+	count_t i;
+	bool valid = false;
+
+	city_seen = calloc((size_t)MAP_SIZE, sizeof(*city_seen));
+	cargo_balance = calloc((size_t)MAP_SIZE * 4, sizeof(*cargo_balance));
+	if (city_seen == NULL || cargo_balance == NULL) {
+		perror("Cannot allocate restore validation state");
+		goto validate_cleanup;
+	}
+
+	for (i = 0; i < MAP_SIZE; i++) {
+		int row = loc_row(i);
+		int col = loc_col(i);
+		bool expected_on_board = row > 0 && row < MAP_HEIGHT - 1 && col > 0 &&
+		                         col < MAP_WIDTH - 1;
+
+		if (state->real_map[i].on_board != expected_on_board ||
+		    (state->real_map[i].contents != MAP_LAND &&
+		     state->real_map[i].contents != MAP_SEA &&
+		     state->real_map[i].contents != MAP_CITY)) {
+			fprintf(stderr, "Saved file has invalid map data.\n");
+			goto validate_cleanup;
+		}
+	}
+
+	for (i = 0; i < NUM_CITY; i++) {
+		const city_info_t *city = &state->city[i];
+		unsigned int prod = (unsigned char)city->prod;
+
+		if (city->loc < 0 || city->loc >= MAP_SIZE ||
+		    !state->real_map[city->loc].on_board || city_seen[city->loc] ||
+		    state->real_map[city->loc].contents != MAP_CITY ||
+		    (city->owner != UNOWNED && city->owner != USER &&
+		     city->owner != COMP) ||
+		    (prod != (unsigned char)NOPIECE && prod >= NUM_OBJECTS)) {
+			fprintf(stderr, "Saved file has invalid city data.\n");
+			goto validate_cleanup;
+		}
+		city_seen[city->loc] = 1;
+	}
+
+	for (i = 0; i < MAP_SIZE; i++) {
+		if ((state->real_map[i].contents == MAP_CITY) != !!city_seen[i]) {
+			fprintf(stderr, "Saved file has inconsistent city data.\n");
+			goto validate_cleanup;
+		}
+	}
+
+	for (i = 0; i < LIST_SIZE; i++) {
+		const piece_info_t *obj = &state->object[i];
+		int cargo_kind = -1;
+		int slot;
+
+		if (obj->owner != UNOWNED && obj->owner != USER && obj->owner != COMP) {
+			fprintf(stderr, "Saved file has invalid object owner.\n");
+			goto validate_cleanup;
+		}
+		if (obj->hits < 0 || obj->count < 0 ||
+		    (obj->owner == UNOWNED && obj->hits != 0)) {
+			fprintf(stderr, "Saved file has invalid object data.\n");
+			goto validate_cleanup;
+		}
+		if (obj->hits == 0) {
+			continue;
+		}
+		if (obj->type < 0 || obj->type >= NUM_OBJECTS || obj->loc < 0 ||
+		    obj->loc >= MAP_SIZE || !state->real_map[obj->loc].on_board) {
+			fprintf(stderr, "Saved file has invalid object data.\n");
+			goto validate_cleanup;
+		}
+		if (obj->type == TRANSPORT) {
+			cargo_kind = 0;
+		} else if (obj->type == CARRIER) {
+			cargo_kind = 1;
+		} else if (obj->count != 0) {
+			fprintf(stderr, "Saved file has invalid cargo data.\n");
+			goto validate_cleanup;
+		}
+		if (cargo_kind >= 0) {
+			if (obj->count > obj_capacity(obj)) {
+				fprintf(stderr, "Saved file has invalid cargo data.\n");
+				goto validate_cleanup;
+			}
+			slot = (obj->owner - USER) * 2 + cargo_kind;
+			cargo_balance[(size_t)slot * MAP_SIZE + obj->loc] -= obj->count;
+		} else if (obj->type == ARMY || obj->type == FIGHTER) {
+			cargo_kind = obj->type == ARMY ? 0 : 1;
+			slot = (obj->owner - USER) * 2 + cargo_kind;
+			cargo_balance[(size_t)slot * MAP_SIZE + obj->loc]++;
+		}
+	}
+
+	for (i = 0; i < (count_t)MAP_SIZE * 4; i++) {
+		if (cargo_balance[i] < 0) {
+			fprintf(stderr, "Saved file has inconsistent cargo data.\n");
+			goto validate_cleanup;
+		}
+	}
+	valid = true;
+
+validate_cleanup:
+	free(cargo_balance);
+	free(city_seen);
+	return valid;
+}
+
+static void install_restore_state(const gamestate_t *state) {
+	count_t i;
 	int j;
 	piece_info_t **list;
+
+	game.date = state->date;
+	game.automove = state->automove;
+	game.resigned = state->resigned;
+	game.debug = state->debug;
+	game.win = state->win;
+	game.save_movie = state->save_movie;
+	game.user_score = state->user_score;
+	game.comp_score = state->comp_score;
+	game.tflag = state->tflag;
+
+	for (i = 0; i < MAP_SIZE; i++) {
+		game.real_map[i].contents = state->real_map[i].contents;
+		game.real_map[i].on_board = state->real_map[i].on_board;
+		game.real_map[i].cityp = NULL;
+		game.real_map[i].objp = NULL;
+	}
+	(void)memcpy(game.comp_map, state->comp_map,
+	             (size_t)MAP_SIZE * sizeof(*game.comp_map));
+	(void)memcpy(game.user_map, state->user_map,
+	             (size_t)MAP_SIZE * sizeof(*game.user_map));
+	(void)memcpy(game.city, state->city,
+	             (size_t)NUM_CITY * sizeof(*game.city));
+
+	game.free_list = NULL;
+	for (j = 0; j < NUM_OBJECTS; j++) {
+		game.comp_obj[j] = NULL;
+		game.user_obj[j] = NULL;
+	}
+	for (i = 0; i < LIST_SIZE; i++) {
+		piece_info_t *dst = &game.object[i];
+		const piece_info_t *src = &state->object[i];
+
+		dst->owner = src->owner;
+		dst->type = src->type;
+		dst->loc = src->loc;
+		dst->func = src->func;
+		dst->hits = src->hits;
+		dst->moved = src->moved;
+		dst->count = src->count;
+		dst->range = src->range;
+		dst->loc_link.next = NULL;
+		dst->loc_link.prev = NULL;
+		dst->cargo_link.next = NULL;
+		dst->cargo_link.prev = NULL;
+		dst->piece_link.next = NULL;
+		dst->piece_link.prev = NULL;
+		dst->ship = NULL;
+		dst->cargo = NULL;
+	}
+
+	for (i = 0; i < NUM_CITY; i++) {
+		game.real_map[game.city[i].loc].cityp = &game.city[i];
+	}
+	for (i = 0; i < LIST_SIZE; i++) {
+		piece_info_t *obj = &game.object[i];
+
+		if (obj->owner == UNOWNED || obj->hits == 0) {
+			LINK(game.free_list, obj, piece_link);
+		} else {
+			list = LIST(obj->owner);
+			LINK(list[obj->type], obj, piece_link);
+			LINK(game.real_map[obj->loc].objp, obj, loc_link);
+		}
+	}
+	ASSERT(read_embark(game.user_obj[TRANSPORT], ARMY));
+	ASSERT(read_embark(game.user_obj[CARRIER], FIGHTER));
+	ASSERT(read_embark(game.comp_obj[TRANSPORT], ARMY));
+	ASSERT(read_embark(game.comp_obj[CARRIER], FIGHTER));
+}
+
+/*
+Recover a saved game from empire.sav.
+The live game is not modified unless the entire save parses and validates.
+*/
+
+bool restore_game(void) {
+	FILE *f = NULL;
+	gamestate_t *state = NULL;
+	bool restored = false;
+	long i;
+	int j;
 	piece_info_t *obj;
 	uint8_t v_u8;
 	uint32_t v_u32;
@@ -860,7 +1083,7 @@ int restore_game(void) {
 	uint32_t num_city, list_size, num_objects, feature_flags;
 	char magic[SAVE_MAGIC_LEN];
 
-	f = fopen(game.savefile, "rb"); /* open for input */
+	f = fopen(game.savefile, "rb");
 	if (f == NULL) {
 		perror("Cannot open saved game");
 		return false;
@@ -934,52 +1157,46 @@ int restore_game(void) {
 		goto restore_cleanup;
 	}
 
-	R_RI64(game.date);
-	R_RU8(game.automove);
-	R_RU8(game.resigned);
-	R_RU8(game.debug);
-	R_RI32(game.win);
-	R_RU8(game.save_movie);
-	R_RI32(game.user_score);
-	R_RI32(game.comp_score);
-	game.automove = !!game.automove;
-	game.resigned = !!game.resigned;
-	game.debug = !!game.debug;
-	game.save_movie = !!game.save_movie;
+	state = new_restore_state();
+	if (state == NULL) {
+		goto restore_cleanup;
+	}
+	state->tflag = (feature_flags & SAVE_FLAG_TORUS) != 0;
+
+	R_RI64(state->date);
+	R_RU8(state->automove);
+	R_RU8(state->resigned);
+	R_RU8(state->debug);
+	R_RI32(state->win);
+	R_RU8(state->save_movie);
+	R_RI32(state->user_score);
+	R_RI32(state->comp_score);
 
 	for (i = 0; i < MAP_SIZE; i++) {
-		R_RU8(game.real_map[i].contents);
-		R_RU8(game.real_map[i].on_board);
-		game.real_map[i].on_board = !!game.real_map[i].on_board;
-		game.real_map[i].cityp = NULL;
-		game.real_map[i].objp = NULL;
+		R_RU8(state->real_map[i].contents);
+		R_RU8(state->real_map[i].on_board);
 	}
 	for (i = 0; i < MAP_SIZE; i++) {
-		R_RU8(game.comp_map[i].contents);
-		R_RI64(game.comp_map[i].seen);
+		R_RU8(state->comp_map[i].contents);
+		R_RI64(state->comp_map[i].seen);
 	}
 	for (i = 0; i < MAP_SIZE; i++) {
-		R_RU8(game.user_map[i].contents);
-		R_RI64(game.user_map[i].seen);
+		R_RU8(state->user_map[i].contents);
+		R_RI64(state->user_map[i].seen);
 	}
 
 	for (i = 0; i < NUM_CITY; i++) {
-		R_RI32(game.city[i].loc);
-		R_RU8(game.city[i].owner);
-		R_RI64(game.city[i].work);
-		R_RU8(game.city[i].prod);
+		R_RI32(state->city[i].loc);
+		R_RU8(state->city[i].owner);
+		R_RI64(state->city[i].work);
+		R_RU8(state->city[i].prod);
 		for (j = 0; j < NUM_OBJECTS; j++) {
-			R_RI64(game.city[i].func[j]);
-		}
-		if (game.city[i].owner != UNOWNED && game.city[i].owner != USER &&
-		    game.city[i].owner != COMP) {
-			fprintf(stderr, "Saved file has invalid city owner.\n");
-			goto restore_cleanup;
+			R_RI64(state->city[i].func[j]);
 		}
 	}
 
 	for (i = 0; i < LIST_SIZE; i++) {
-		obj = &(game.object[i]);
+		obj = &state->object[i];
 		R_RI32(obj->owner);
 		R_RI32(obj->type);
 		R_RI32(obj->loc);
@@ -988,80 +1205,29 @@ int restore_game(void) {
 		R_RI32(obj->moved);
 		R_RI32(obj->count);
 		R_RI32(obj->range);
-		if (obj->owner != UNOWNED && obj->owner != USER &&
-		    obj->owner != COMP) {
-			fprintf(stderr, "Saved file has invalid object owner.\n");
-			goto restore_cleanup;
-		}
-		if (obj->hits < 0 || obj->count < 0) {
-			fprintf(stderr, "Saved file has invalid object data.\n");
-			goto restore_cleanup;
-		}
 	}
 
-	/* Our pointers may not be valid because of source
-	   changes or other things.  We recreate them. */
-
-	game.free_list = NULL; /* zero all ptrs */
-	for (i = 0; i < LIST_SIZE; i++) {
-		game.object[i].loc_link.next = NULL;
-		game.object[i].loc_link.prev = NULL;
-		game.object[i].cargo_link.next = NULL;
-		game.object[i].cargo_link.prev = NULL;
-		game.object[i].piece_link.next = NULL;
-		game.object[i].piece_link.prev = NULL;
-		game.object[i].ship = NULL;
-		game.object[i].cargo = NULL;
+	if (!validate_restore_state(state)) {
+		goto restore_cleanup;
 	}
-	for (i = 0; i < NUM_OBJECTS; i++) {
-		game.comp_obj[i] = NULL;
-		game.user_obj[i] = NULL;
+	if (fclose(f) != 0) {
+		perror("Cannot close saved game");
+		f = NULL;
+		goto restore_cleanup;
 	}
-	/* put cities on game.real_map */
-	for (i = 0; i < NUM_CITY; i++) {
-		if (game.city[i].loc < 0 || game.city[i].loc >= MAP_SIZE) {
-			fprintf(stderr, "Saved file has invalid city location.\n");
-			goto restore_cleanup;
-		}
-		game.real_map[game.city[i].loc].cityp = &(game.city[i]);
-	}
-
-	/* put pieces in free list or on map and in object lists */
-	for (i = 0; i < LIST_SIZE; i++) {
-		obj = &(game.object[i]);
-		if (game.object[i].owner == UNOWNED ||
-		    game.object[i].hits == 0) {
-			LINK(game.free_list, obj, piece_link);
-		} else {
-			if (obj->loc < 0 || obj->loc >= MAP_SIZE ||
-			    obj->type < 0 || obj->type >= NUM_OBJECTS) {
-				fprintf(stderr,
-				        "Saved file has invalid object data.\n");
-				goto restore_cleanup;
-			}
-			list = LIST(game.object[i].owner);
-			LINK(list[game.object[i].type], obj, piece_link);
-			LINK(game.real_map[game.object[i].loc].objp, obj,
-			     loc_link);
-		}
-	}
-
-	/* Embark armies and fighters. */
-	read_embark(game.user_obj[TRANSPORT], ARMY);
-	read_embark(game.user_obj[CARRIER], FIGHTER);
-	read_embark(game.comp_obj[TRANSPORT], ARMY);
-	read_embark(game.comp_obj[CARRIER], FIGHTER);
-
-	game.tflag = (feature_flags & SAVE_FLAG_TORUS) != 0;
+	f = NULL;
+	install_restore_state(state);
 	update_display_size();
-	(void)fclose(f);
 	kill_display(); /* what we had is no longer good */
 	topmsg(3, "Game restored from save file.");
-	return (true);
+	restored = true;
 
 restore_cleanup:
-	(void)fclose(f);
-	return (false);
+	if (f != NULL) {
+		(void)fclose(f);
+	}
+	free_restore_state(state);
+	return restored;
 
 #undef R_RU8
 #undef R_RU32
@@ -1075,16 +1241,14 @@ We then loop through the pieces at the ship's location until
 the ship has the same amount of cargo it previously had.
 */
 
-void read_embark(piece_info_t *list, int piece_type) {
-	void inconsistent(void);
-
+static bool read_embark(piece_info_t *list, int piece_type) {
 	piece_info_t *ship;
 	piece_info_t *obj;
 
 	for (ship = list; ship != NULL; ship = ship->piece_link.next) {
 		int count = ship->count; /* get # of pieces we need */
 		if (count < 0) {
-			inconsistent();
+			return false;
 		}
 		ship->count = 0; /* nothing on board yet */
 		for (obj = game.real_map[ship->loc].objp; obj && count;
@@ -1096,14 +1260,10 @@ void read_embark(piece_info_t *list, int piece_type) {
 			}
 		}
 		if (count) {
-			inconsistent();
+			return false;
 		}
 	}
-}
-
-void inconsistent(void) {
-	(void)printf("saved game is inconsistent.  Please remove it.\n");
-	exit(1);
+	return true;
 }
 
 /*

@@ -663,11 +663,6 @@ Line number refer to commit 65dd37.
 
 ### High severity
 
-  - A failed manual restore corrupts the running game. Restore writes directly into global state
-    beginning at game.c:904, then returns false without rollback at game.c:1027; the R command
-    ignores that return value at empire.c:142. Parse and validate into staging storage, then
-    commit atomically.
-
   - Normal edit commands can invalidate satellite movement. Commands such as random, wake,
     sleep, or cardinal movement overwrite obj->func in edit.c:201 and edit.c:343, while
     object.c:366 assumes a diagonal movement function and indexes dir_offset without validation.

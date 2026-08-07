@@ -144,8 +144,14 @@ void do_command(char orders) {
 		break;
 
 	case 'R': /* restore game */
+		ncycle = cur_sector();
+		if (ncycle == -1)
+			ncycle = 0;
 		clear_screen();
-		restore_game();
+		if (!restore_game()) {
+			print_sector_u(ncycle);
+			error("Restore failed; current game unchanged.");
+		}
 		break;
 
 	case 'S': /* save game */
