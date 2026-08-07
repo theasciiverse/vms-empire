@@ -18,9 +18,9 @@ feature might be difficult.  This feature also gives the computer
 a small advantage which slightly helps overcome the natural superiority
 of humans.
 
-2)  Once upon a time, if a fighter landed on a carrier, the user
-was never asked if she wanted to move it again.  I don't know if
-this bug still exists.
+2)  When setting a city function, the computer should prompt
+for the various pieces of input.  Even I have a hard time setting
+functions for cities.
 
 3)  Satellites are not completely implemented.  When the user
 moves to a satellite, it should be allowed.  The user should
@@ -50,9 +50,6 @@ should be some mechanism to allow a user to specify that an army
 should sit on the shore and wait for either a transport to pass by,
 or for an invader to appear on the continent.
 
-8)  When setting a city function, the computer should prompt
-for the various pieces of input.  Even I have a hard time setting
-functions for cities.
 
 
 Code Cleanup
