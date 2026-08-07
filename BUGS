@@ -583,25 +583,6 @@ immediately if the game has been saved.  If the game hasn't been
 saved, the user should be told, and asked if she really wants to
 quit.
 
-5) "Andrew Morrow" <amorrow@nouveausystems.com> reported this in 
-August 2002:
-
-I am playing the version of vms-empire that you claim in your READ-ME
-to maintain.  I noticed a bug vms-empire that I think you should
-know.  Sometimes the program exits in util.c/check_cargo() at the line
-
-    ASSERT (q->owner == p->owner);
-
-At least one case where this can happen is when two opposing
-transports meet at sea.  Somehow, an army can transfer to an enemy
-transport.  I have not examined the exact line this happens on (maybe
-while attempting to attack the enemy transport or while executing its
-function to move a in particular direction?)  but I have saved such a
-game, commented out this line, landed my transport (which has a
-computer army on board), and seen the computer army exit my
- transport.
-
-
 Empire 2025 feature gap summary
 -------------------------------
 

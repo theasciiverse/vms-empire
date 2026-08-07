@@ -776,11 +776,12 @@ Prefer switching to staying.  If we switch, we force
 one of the ships to become more full.
 */
 
-piece_info_t *find_best_tt(piece_info_t *best, loc_t loc) {
+piece_info_t *find_best_tt(piece_info_t *best, loc_t loc, int owner) {
 	piece_info_t *p;
 
 	for (p = game.real_map[loc].objp; p != NULL; p = p->loc_link.next)
-		if (p->type == TRANSPORT && obj_capacity(p) > p->count) {
+		if (p->type == TRANSPORT && p->owner == owner &&
+		    obj_capacity(p) > p->count) {
 			if (!best)
 				best = p;
 			else if (p->count >= best->count)
@@ -797,13 +798,13 @@ bool load_army(piece_info_t *obj) {
 	piece_info_t *p;
 	int i;
 
-	p = find_best_tt(obj->ship, obj->loc); /* look here first */
+	p = find_best_tt(obj->ship, obj->loc, obj->owner); /* look here first */
 
 	for (i = 0; i < 8; i++) { /* try surrounding squares */
 		loc_t x_loc = obj->loc + dir_offset[i];
 		x_loc = wrap_map_loc(x_loc);
 		if (game.real_map[x_loc].on_board)
-			p = find_best_tt(p, x_loc);
+			p = find_best_tt(p, x_loc, obj->owner);
 	}
 	if (!p)
 		return false; /* no tt to be found */
@@ -813,7 +814,7 @@ bool load_army(piece_info_t *obj) {
 	} else
 		move_obj(obj, p->loc); /* move to square with ship */
 
-	if (p->ship != obj->ship) { /* reload army to new ship */
+	if (p != obj->ship) { /* reload army to new ship */
 		disembark(obj);
 		embark(p, obj);
 	}

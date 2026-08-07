@@ -1058,7 +1058,8 @@ void read_embark(piece_info_t *list, int piece_type) {
 		ship->count = 0; /* nothing on board yet */
 		for (obj = game.real_map[ship->loc].objp; obj && count;
 		     obj = obj->loc_link.next) {
-			if (obj->ship == NULL && obj->type == piece_type) {
+			if (obj->ship == NULL && obj->type == piece_type &&
+			    obj->owner == ship->owner) {
 				embark(ship, obj);
 				count -= 1;
 			}

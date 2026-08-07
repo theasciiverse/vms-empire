@@ -91,14 +91,14 @@ piece_info_t *find_obj(int type, loc_t loc) {
 }
 
 /*
-Find a non-full item of the appropriate type at the given location.
+Find a non-full item of the appropriate type and owner at the given location.
 */
 
-piece_info_t *find_nfull(int type, loc_t loc) {
+piece_info_t *find_nfull(int type, loc_t loc, int owner) {
 	piece_info_t *p;
 
 	for (p = game.real_map[loc].objp; p != NULL; p = p->loc_link.next)
-		if (p->type == type) {
+		if (p->type == type && p->owner == owner) {
 			if (obj_capacity(p) > p->count)
 				return (p);
 		}
@@ -116,8 +116,8 @@ loc_t find_transport(int owner, loc_t loc) {
 	for (i = 0; i < 8; i++) { /* look around */
 		loc_t new_loc = loc + dir_offset[i];
 		new_loc = wrap_map_loc(new_loc);
-		const piece_info_t *t = find_nfull(TRANSPORT, new_loc);
-		if (t != NULL && t->owner == owner)
+		const piece_info_t *t = find_nfull(TRANSPORT, new_loc, owner);
+		if (t != NULL)
 			return (new_loc);
 	}
 	return (loc); /* no tt found */
@@ -159,6 +159,7 @@ Move an object onto a ship.
 */
 
 void embark(piece_info_t *ship, piece_info_t *obj) {
+	ASSERT(ship->owner == obj->owner);
 	obj->ship = ship;
 	LINK(ship->cargo, obj, cargo_link);
 	ship->count += 1;
@@ -320,14 +321,14 @@ void move_obj(piece_info_t *obj, loc_t new_loc) {
 	case FIGHTER:
 		if (game.real_map[obj->loc].cityp ==
 		    NULL) { /* not in a city? */
-			p = find_nfull(CARRIER, obj->loc);
+			p = find_nfull(CARRIER, obj->loc, obj->owner);
 			if (p != NULL)
 				embark(p, obj);
 		}
 		break;
 
 	case ARMY:
-		p = find_nfull(TRANSPORT, obj->loc);
+		p = find_nfull(TRANSPORT, obj->loc, obj->owner);
 		if (p != NULL)
 			embark(p, obj);
 		break;
@@ -436,8 +437,8 @@ bool good_loc(const piece_info_t *obj, loc_t loc) {
 
 	/* armies can move into unfull transports */
 	if (obj->type == ARMY) {
-		p = find_nfull(TRANSPORT, loc);
-		return (p != NULL && p->owner == obj->owner);
+		p = find_nfull(TRANSPORT, loc, obj->owner);
+		return (p != NULL);
 	}
 
 	/* ships and fighters can move into cities */
@@ -447,8 +448,8 @@ bool good_loc(const piece_info_t *obj, loc_t loc) {
 
 	/* fighters can move onto unfull carriers */
 	if (obj->type == FIGHTER) {
-		p = find_nfull(CARRIER, loc);
-		return (p != NULL && p->owner == obj->owner);
+		p = find_nfull(CARRIER, loc, obj->owner);
+		return (p != NULL);
 	}
 
 	return (false);

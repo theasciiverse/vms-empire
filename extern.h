@@ -164,7 +164,7 @@ int isqrt(int n);
 int find_nearest_city(long loc, int owner, long *city_loc);
 city_info_t *find_city(long loc); /* object routines */
 piece_info_t *find_obj(int type, long loc);
-piece_info_t *find_nfull(int type, long loc);
+piece_info_t *find_nfull(int type, long loc, int owner);
 long find_transport(int owner, long loc);
 piece_info_t *find_obj_at_loc(long loc);
 int obj_moves(const piece_info_t *obj);

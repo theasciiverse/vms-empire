@@ -1154,7 +1154,7 @@ if she really wants to attack the city.
 void move_army_to_city(piece_info_t *obj, loc_t city_loc) {
 	const piece_info_t *tt;
 
-	tt = find_nfull(TRANSPORT, city_loc);
+	tt = find_nfull(TRANSPORT, city_loc, obj->owner);
 
 	if (tt != NULL) {
 		move_obj(obj, city_loc);
