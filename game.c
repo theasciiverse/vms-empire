@@ -496,34 +496,45 @@ bool good_cont(loc_t mapi) {
 }
 
 /*
-Mark a continent.  This recursive algorithm marks the current square
-and counts it if it is land or city.  If it is city, we also check
+Mark a continent.  This algorithm marks the current square and counts it
+if it is land or city.  If it is city, we also check
 to see if it is a shore city, and we install it in the list of
 cities for the continent.  We then examine each surrounding cell.
 */
 
 static void mark_cont(loc_t mapi) {
-	int i;
+	count_t pending;
 
 	if (marked[mapi] || game.real_map[mapi].contents == MAP_SEA ||
 	    !game.real_map[mapi].on_board) {
 		return;
 	}
 
-	marked[mapi] = 1; /* mark this cell seen */
-	nland++;          /* count land on continent */
+	pending = 1;
+	land[0] = mapi;
+	marked[mapi] = 1;
 
-	if (game.real_map[mapi].contents == MAP_CITY) { /* a city? */
-		cont_tab[ncont].cityp[ncity] = game.real_map[mapi].cityp;
-		ncity++;
-		if (rmap_shore(mapi)) {
-			nshore++;
+	while (pending > 0) {
+		int i;
+
+		mapi = land[--pending];
+		nland++;
+
+		if (game.real_map[mapi].contents == MAP_CITY) {
+			cont_tab[ncont].cityp[ncity++] = game.real_map[mapi].cityp;
+			if (rmap_shore(mapi)) {
+				nshore++;
+			}
 		}
-	}
 
-	for (i = 0; i < 8; i++) { /* look at surrounding squares */
-		loc_t adjacent = mapi + dir_offset[i];
-		mark_cont(wrap_map_loc(adjacent));
+		for (i = 0; i < 8; i++) {
+			loc_t adjacent = wrap_map_loc(mapi + dir_offset[i]);
+			if (!marked[adjacent] && game.real_map[adjacent].on_board &&
+			    game.real_map[adjacent].contents != MAP_SEA) {
+				marked[adjacent] = 1;
+				land[pending++] = adjacent;
+			}
+		}
 	}
 }
 

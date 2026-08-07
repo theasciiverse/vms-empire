@@ -147,39 +147,33 @@ By adjusting the value of
 or lakes.
 */
 
-static void rmap_mark_up_cont(int *cont_map, loc_t loc, char bad_terrain);
-
 void rmap_cont(int *cont_map, loc_t loc, char bad_terrain) {
+	count_t pending;
+
+	map_storage_init();
 	(void)memset((char *)cont_map, '\0', MAP_SIZE * sizeof(int));
-	rmap_mark_up_cont(cont_map, loc, bad_terrain);
-}
-
-/*
-Mark all squares of a continent and the squares that are adjacent
-to the continent which are on the board.  Our passed location is
-known to be either on the continent or adjacent to the continent.
-
-Someday this should be tweaked to use perimeter lists.
-*/
-
-static void rmap_mark_up_cont(int *cont_map, loc_t loc, char bad_terrain) {
-	int i;
-	loc_t new_loc;
-
-	if (!game.real_map[loc].on_board) {
+	if (!game.real_map[loc].on_board ||
+	    game.real_map[loc].contents == bad_terrain) {
 		return; /* off board */
 	}
-	if (cont_map[loc]) {
-		return; /* already marked */
-	}
-	if (game.real_map[loc].contents == bad_terrain) {
-		return; /* off continent */
-	}
-	cont_map[loc] = 1; /* on continent */
 
-	FOR_ADJ(loc, new_loc, i) {
-		new_loc = wrap_map_loc(new_loc);
-		rmap_mark_up_cont(cont_map, new_loc, bad_terrain);
+	pending = 1;
+	p1.list[0] = loc;
+	cont_map[loc] = 1;
+
+	while (pending > 0) {
+		int i;
+		loc_t new_loc;
+
+		loc = p1.list[--pending];
+		FOR_ADJ(loc, new_loc, i) {
+			new_loc = wrap_map_loc(new_loc);
+			if (game.real_map[new_loc].on_board && !cont_map[new_loc] &&
+			    game.real_map[new_loc].contents != bad_terrain) {
+				cont_map[new_loc] = 1;
+				p1.list[pending++] = new_loc;
+			}
+		}
 	}
 }
 
@@ -1021,7 +1015,7 @@ loc_t vmap_find_dest(path_map_t path_map[], view_map_t vmap[], loc_t cur_loc,
 }
 
 /*
-Starting with the destination, we recursively back track toward the source
+Starting with the destination, we backtrack toward the source
 marking all cells which are on a shortest path between the start and the
 destination.  To do this, we know the distance from the destination to
 the start.  The destination is on a path.  We then find the cells adjacent
@@ -1032,12 +1026,10 @@ adjacent to P, the cost to reach S is less than the cost to reach P,
 and the cost to move from S to P is the difference in cost between
 S and P.
 
-Someday, this routine should probably use perimeter lists as well.
 */
 
 void vmap_mark_path(path_map_t *path_map, view_map_t *vmap, loc_t dest) {
-	int n;
-	loc_t new_dest;
+	count_t pending;
 
 	if (path_map[dest].cost == 0) {
 		return; /* reached end of path */
@@ -1046,13 +1038,25 @@ void vmap_mark_path(path_map_t *path_map, view_map_t *vmap, loc_t dest) {
 		return; /* already marked */
 	}
 	path_map[dest].terrain = T_PATH; /* this square is on path */
+	map_storage_init();
+	pending = 1;
+	p1.list[0] = dest;
 
-	/* loop to mark adjacent squares on shortest path */
-	FOR_ADJ(dest, new_dest, n) {
-		new_dest = wrap_map_loc(new_dest);
-		if (path_map[new_dest].cost ==
-		    path_map[dest].cost - path_map[dest].inc_cost) {
-			vmap_mark_path(path_map, vmap, new_dest);
+	while (pending > 0) {
+		int n;
+		loc_t new_dest;
+
+		dest = p1.list[--pending];
+		FOR_ADJ(dest, new_dest, n) {
+			new_dest = wrap_map_loc(new_dest);
+			if (game.real_map[new_dest].on_board &&
+			    path_map[new_dest].cost != 0 &&
+			    path_map[new_dest].terrain != T_PATH &&
+			    path_map[new_dest].cost ==
+			        path_map[dest].cost - path_map[dest].inc_cost) {
+				path_map[new_dest].terrain = T_PATH;
+				p1.list[pending++] = new_dest;
+			}
 		}
 	}
 }
