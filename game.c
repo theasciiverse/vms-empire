@@ -139,8 +139,8 @@ at program start up.
 static int height_count[MAX_HEIGHT + 1];
 
 void make_map(void) {
-	int from, to, k;
-	count_t i, j, sum;
+	int from, to, k, water_line;
+	count_t i, j, sum, playable, target_water, water_at_line;
 	loc_t loc;
 
 	for (i = 0; i < MAP_SIZE;
@@ -168,43 +168,63 @@ void make_map(void) {
 		from = k;
 	}
 
-	/* count the number of cells at each height */
+	/* Count playable cells at each height. */
 	for (i = 0; i <= MAX_HEIGHT; i++) {
 		height_count[i] = 0;
 	}
 
+	playable = 0;
 	for (i = 0; i < MAP_SIZE; i++) {
-		height_count[height[from][i]]++;
-	}
-
-	/* find the water line */
-	loc = MAX_HEIGHT; /* default to all water */
-	sum = 0;
-	for (i = 0; i <= MAX_HEIGHT; i++) {
-		sum += height_count[i];
-		if (sum * 100 / MAP_SIZE > game.WATER_RATIO &&
-		    sum >= NUM_CITY) {
-			loc = i; /* this is last height that is water */
-			break;
+		j = loc_col(i);
+		k = loc_row(i);
+		game.real_map[i].on_board = !(j == 0 || j == MAP_WIDTH - 1 ||
+		                              k == 0 || k == MAP_HEIGHT - 1);
+		if (game.real_map[i].on_board) {
+			height_count[height[from][i]]++;
+			playable++;
 		}
 	}
 
-	/* mark the land and water */
+	/* Find the water line, leaving enough playable land for every city. */
+	target_water = playable * game.WATER_RATIO / 100;
+	if (target_water > playable - NUM_CITY) {
+		target_water = playable - NUM_CITY;
+	}
+	water_line = MAX_HEIGHT;
+	sum = 0;
+	for (i = 0; i <= MAX_HEIGHT; i++) {
+		if (sum + height_count[i] >= target_water) {
+			water_line = (int)i;
+			break;
+		}
+		sum += height_count[i];
+	}
+	water_at_line = target_water - sum;
+
+	/* Mark cells below the water line and collect cells tied at the line. */
+	sum = 0;
 	for (i = 0; i < MAP_SIZE; i++) {
-		if (height[from][i] > loc) {
-			game.real_map[i].contents = MAP_LAND;
-		} else {
+		if (!game.real_map[i].on_board || height[from][i] < water_line) {
 			game.real_map[i].contents = MAP_SEA;
+		} else {
+			game.real_map[i].contents = MAP_LAND;
+			if (height[from][i] == water_line) {
+				land[sum++] = i;
+			}
 		}
 
 		game.real_map[i].objp = NULL; /* nothing in cell yet */
 		game.real_map[i].cityp = NULL;
+	}
 
-		j = loc_col(i);
-		k = loc_row(i);
+	/* Randomly split equal-height cells to hit the requested ratio exactly. */
+	for (i = 0; i < water_at_line; i++) {
+		count_t choice = i + irand(sum - i);
+		loc_t selected = land[choice];
 
-		game.real_map[i].on_board = !(j == 0 || j == MAP_WIDTH - 1 ||
-		                              k == 0 || k == MAP_HEIGHT - 1);
+		land[choice] = land[i];
+		land[i] = selected;
+		game.real_map[selected].contents = MAP_SEA;
 	}
 }
 

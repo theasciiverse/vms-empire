@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
 	int errflg = 0;
 	int wflg, sflg, dflg, Sflg;
 	int map_width, map_height;
-	int land;
+	count_t land, playable;
 
 	wflg = 70; /* set defaults */
 	sflg = 5;
@@ -120,7 +120,15 @@ int main(int argc, char *argv[]) {
 
 	if (wflg < 10 || wflg > 90) {
 		(void)printf(
-		    "empire: -w argument must be in the range 0..90.\n");
+		    "empire: -w argument must be in the range 10..90.\n");
+		exit(1);
+	}
+	playable = (count_t)(MAP_WIDTH - 2) * (MAP_HEIGHT - 2);
+	land = playable - playable * wflg / 100;
+	if (land < NUM_CITY) {
+		(void)printf("empire: -g and -w leave only %ld playable land "
+		             "cells for %d cities.\n",
+		             land, NUM_CITY);
 		exit(1);
 	}
 	if (sflg < 0) {
@@ -146,9 +154,8 @@ int main(int argc, char *argv[]) {
 	game.save_interval = Sflg;
 
 	/* compute min distance between cities */
-	land = MAP_SIZE * (100 - game.WATER_RATIO) / 100; /* available land */
-	land /= NUM_CITY;                                 /* land per city */
-	game.MIN_CITY_DIST = isqrt(land); /* distance between cities */
+	land /= NUM_CITY; /* land per city */
+	game.MIN_CITY_DIST = isqrt((int)land); /* distance between cities */
 
 	empire(); /* call main routine */
 	return (0);

@@ -663,12 +663,6 @@ Line number refer to commit 65dd37.
 
 ### High severity
 
-  - Accepted small, high-water maps frequently cannot hold all required cities. Water allocation
-    counts the non-playable border at game.c:176, but city placement only accepts playable cells
-    at game.c:260, eventually asserting at game.c:274. For 10x10, 90% water, 937 of 1,000
-    generated maps lacked enough land. Validate feasibility or regenerate terrain rather than
-    decrementing indefinitely.
-
   - A failed manual restore corrupts the running game. Restore writes directly into global state
     beginning at game.c:904, then returns false without rollback at game.c:1027; the R command
     ignores that return value at empire.c:142. Parse and validate into staging storage, then

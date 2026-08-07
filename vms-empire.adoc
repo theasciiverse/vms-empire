@@ -30,7 +30,8 @@ rules that you do.
 `-w` _water_::
   This option controls the amount of water on the map. This is given as
   the percentage of the map which should be water. The default is 70%
-  water. _water_ must be an integer in the between 10 and 90 inclusive.
+  water. _water_ must be an integer between 10 and 90 inclusive and, for
+  the selected geometry, must leave enough playable land for every city.
 `-s` _smooth_::
   This controls the smoothness of the map. A low value will produce a
   highly chaotic map with lots of small islands or lakes. A high value
