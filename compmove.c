@@ -627,7 +627,7 @@ transport and tt producing city with a '$'.
 
 static void make_army_load_map(const piece_info_t *obj, view_map_t *xmap,
 	                       const view_map_t *vmap) {
-	piece_info_t *p;
+	const piece_info_t *p;
 	int i;
 
 	(void)memcpy(xmap, vmap, sizeof(view_map_t) * MAP_SIZE);
@@ -662,7 +662,7 @@ static bool nearby_load(const piece_info_t *obj, loc_t loc) {
 /* Return number of nearby armies. */
 
 static count_t nearby_count(loc_t loc) {
-	piece_info_t *obj;
+	const piece_info_t *obj;
 	int count;
 
 	count = 0;
@@ -676,7 +676,7 @@ static count_t nearby_count(loc_t loc) {
 /* Make load map for a ship. */
 
 static void make_tt_load_map(view_map_t *xmap, const view_map_t *vmap) {
-	piece_info_t *p;
+	const piece_info_t *p;
 
 	(void)memcpy(xmap, vmap, sizeof(view_map_t) * MAP_SIZE);
 

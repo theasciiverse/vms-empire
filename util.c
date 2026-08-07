@@ -114,7 +114,7 @@ static bool in_obj[LIST_SIZE];   /* true if object in obj list */
 static bool in_loc[LIST_SIZE];   /* true if object in a loc list */
 static bool in_cargo[LIST_SIZE]; /* true if object in a cargo list */
 static void check_obj(piece_info_t **list, int owner);
-static void check_cargo(piece_info_t *list, int cargo_type);
+static void check_cargo(const piece_info_t *list, int cargo_type);
 static void check_obj_cargo(piece_info_t **list);
 
 void check(void) {
@@ -257,7 +257,7 @@ Check for:
 6)  All cargo is alive.
 */
 
-static void check_cargo(piece_info_t *list, int cargo_type) {
+static void check_cargo(const piece_info_t *list, int cargo_type) {
 	const piece_info_t *p;
 	const piece_info_t *q;
 

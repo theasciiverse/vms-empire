@@ -28,8 +28,8 @@ real maps, path_maps, and cont_maps.
 	}
 
 static void expand_perimeter(path_map_t *, const view_map_t *, move_info_t *,
-                             perimeter_t *, int, int, int, int, perimeter_t *,
-                             perimeter_t *);
+	                     const perimeter_t *, int, int, int, int,
+	                     perimeter_t *, perimeter_t *);
 static void expand_prune(view_map_t *, path_map_t *, loc_t, int, perimeter_t *,
                          int *);
 static int objective_cost(const view_map_t *, move_info_t *, loc_t, int);
@@ -565,8 +565,8 @@ We set the cost to reach the current perimeter.
 
 static void
 expand_perimeter(path_map_t *pmap, const view_map_t *vmap, move_info_t *move_info,
-                 perimeter_t *curp, int type, int cur_cost, int inc_wcost,
-                 int inc_lcost, perimeter_t *waterp, perimeter_t *landp)
+	         const perimeter_t *curp, int type, int cur_cost, int inc_wcost,
+	         int inc_lcost, perimeter_t *waterp, perimeter_t *landp)
 /* pmap = path map to up1date */
 /* move_info = objectives and weights */
 /* curp = perimeter to expand */

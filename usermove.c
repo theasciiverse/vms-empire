@@ -22,7 +22,7 @@ static void move_explore(piece_info_t *obj);
 static void move_transport(piece_info_t *obj);
 static void move_armyload(piece_info_t *obj);
 static void move_armyattack(piece_info_t *obj);
-static void move_ttload(piece_info_t *obj);
+static void move_ttload(const piece_info_t *obj);
 static void move_repair(piece_info_t *obj);
 static void move_fill(piece_info_t *obj);
 static void move_land(piece_info_t *obj);
@@ -377,7 +377,7 @@ the transport, and awaken the army.
 static void move_armyload(piece_info_t *obj) {
 	view_map_t amap[MAP_SIZE];
 	loc_t loc;
-	piece_info_t *p;
+	const piece_info_t *p;
 	static move_info_t user_army_load = {
 		USER, "$", {1}
 	};
@@ -448,7 +448,7 @@ static void move_armyattack(piece_info_t *obj) {
 	}
 }
 
-static void move_ttload(piece_info_t *obj) { ABORT; }
+static void move_ttload(const piece_info_t *obj) { ABORT; }
 
 /*
 Move a ship toward port.  If the ship is healthy, wake it up.
