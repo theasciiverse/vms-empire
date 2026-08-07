@@ -146,7 +146,6 @@ static int height_count[MAX_HEIGHT + 1];
 static void make_map(void) {
 	int from, to, k, water_line;
 	count_t i, j, sum, playable, target_water, water_at_line;
-	loc_t loc;
 
 	for (i = 0; i < MAP_SIZE;
 	     i++) { /* fill game.real_map with random sand */
@@ -159,7 +158,8 @@ static void make_map(void) {
 		for (j = 0; j < MAP_SIZE; j++) {
 			sum = height[from][j];
 			for (k = 0; k < 8; k++) {
-				loc = j + dir_offset[k];
+				loc_t loc = j + dir_offset[k];
+
 				/* edges get smoothed in a wierd fashion */
 				if (loc < 0 || loc >= MAP_SIZE) {
 					loc = j;
@@ -447,7 +447,6 @@ If there are no more continents, we return false.
 
 static bool find_next(loc_t *mapi) {
 	count_t i;
-	long val;
 
 	for (;;) {
 		if (*mapi >= MAP_SIZE) {
@@ -458,6 +457,8 @@ static bool find_next(loc_t *mapi) {
 		    game.real_map[*mapi].contents == MAP_SEA) {
 			*mapi += 1;
 		} else if (good_cont(*mapi)) {
+			long val;
+
 			rank_tab[ncont] = ncont; /* insert cont in rank tab */
 			val = cont_tab[ncont].value;
 
@@ -568,13 +569,13 @@ between the user's continent and the computer's continent.
 
 static void make_pair(void) {
 	int i, j, k, npair;
-	long val;
 
 	npair = 0; /* none yet */
 
 	for (i = 0; i < ncont; i++) {
 		for (j = 0; j < ncont; j++) { /* loop through all continents */
-			val = cont_tab[i].value - cont_tab[j].value;
+			long val = cont_tab[i].value - cont_tab[j].value;
+
 			pair_tab[npair].value = val;
 			pair_tab[npair].user_cont = i;
 			pair_tab[npair].comp_cont = j;
@@ -1369,7 +1370,6 @@ extern char city_char[];
 void save_movie_screen(void) {
 	FILE *f; /* file to save game in */
 	count_t i;
-	const piece_info_t *p;
 
 	f = fopen("empmovie.dat", "ab"); /* open for append */
 	if (f == NULL) {
@@ -1381,7 +1381,7 @@ void save_movie_screen(void) {
 		if (game.real_map[i].cityp) {
 			mapbuf[i] = city_char[game.real_map[i].cityp->owner];
 		} else {
-			p = find_obj_at_loc(i);
+			const piece_info_t *p = find_obj_at_loc(i);
 
 			if (!p) {
 				mapbuf[i] = game.real_map[i].contents;

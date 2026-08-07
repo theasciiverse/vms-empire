@@ -118,7 +118,7 @@ static void check_cargo(piece_info_t *list, int cargo_type);
 static void check_obj_cargo(piece_info_t **list);
 
 void check(void) {
-	long i, j;
+	long i;
 	const piece_info_t *p;
 
 	/* nothing in any list yet */
@@ -154,6 +154,8 @@ void check(void) {
 
 		for (p = game.real_map[i].objp; p != NULL;
 		     p = p->loc_link.next) {
+			long j;
+
 			ASSERT(p->loc == i);
 			ASSERT(p->hits > 0);
 			ASSERT(p->owner == USER || p->owner == COMP);
@@ -212,11 +214,13 @@ Check object lists.  We look for:
 */
 
 static void check_obj(piece_info_t **list, int owner) {
-	long i, j;
+	long i;
 	const piece_info_t *p;
 
 	for (i = 0; i < NUM_OBJECTS; i++) {
 		for (p = list[i]; p != NULL; p = p->piece_link.next) {
+			long j;
+
 			ASSERT(p->owner == owner);
 			ASSERT(p->type == i);
 			ASSERT(p->hits > 0);
@@ -256,11 +260,12 @@ Check for:
 static void check_cargo(piece_info_t *list, int cargo_type) {
 	const piece_info_t *p;
 	const piece_info_t *q;
-	long j;
 
 	for (p = list; p != NULL; p = p->piece_link.next) {
 		long count = 0;
 		for (q = p->cargo; q != NULL; q = q->cargo_link.next) {
+			long j;
+
 			count += 1; /* count items in list */
 			ASSERT(q->type == cargo_type);
 			ASSERT(q->owner == p->owner);

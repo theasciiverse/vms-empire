@@ -60,7 +60,6 @@ extern int get_piece_name(void);
 void user_move(void) {
 	int i, j, sec_start;
 	piece_info_t *obj, *next_obj;
-	int prod;
 
 	/* First we loop through objects to update the user's view
 	   of the world and perform any other necessary processing.
@@ -81,6 +80,8 @@ void user_move(void) {
 	/* produce new hardware */
 	for (i = 0; i < NUM_CITY; i++) {
 		if (game.city[i].owner == USER) {
+			int prod;
+
 			scan(game.user_map, game.city[i].loc);
 			prod = game.city[i].prod;
 

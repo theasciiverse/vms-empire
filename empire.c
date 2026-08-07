@@ -35,7 +35,6 @@ static void c_movie(void);
  */
 
 void empire(void) {
-	char order;
 	int turn = 0;
 
 	ttinit(); /* init tty */
@@ -64,6 +63,8 @@ void empire(void) {
 				}
 			}
 		} else {
+			char order;
+
 			prompt(""); /* blank top line */
 			redisplay();
 			prompt("Your orders? ");

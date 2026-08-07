@@ -1149,10 +1149,9 @@ static int order[] = {NORTHWEST, NORTHEAST, SOUTHWEST, SOUTHEAST,
 
 loc_t vmap_find_dir(path_map_t path_map[], view_map_t *vmap, loc_t loc,
                     const char *terrain, const char *adj_char) {
-	int i, count, bestcount;
+	int i, bestcount;
 	loc_t bestloc;
-	int path_count, bestpath;
-	const char *p;
+	int bestpath;
 
 	if (game.trace_pmap) {
 		print_pzoom("Before vmap_find_dir:", path_map, vmap);
@@ -1167,12 +1166,14 @@ loc_t vmap_find_dir(path_map_t path_map[], view_map_t *vmap, loc_t loc,
 		new_loc = wrap_map_loc(new_loc);
 		if (path_map[new_loc].terrain ==
 		    T_PATH) { /* which is on path */
-			p = strchr(terrain, vmap[new_loc].contents);
+			const char *p =
+			    strchr(terrain, vmap[new_loc].contents);
 
 			if (p != NULL) { /* desirable square? */
-				count = vmap_count_adjacent(vmap, new_loc,
-				                            adj_char);
-				path_count = vmap_count_path(path_map, new_loc);
+				int count = vmap_count_adjacent(
+				    vmap, new_loc, adj_char);
+				int path_count =
+				    vmap_count_path(path_map, new_loc);
 
 				/* remember best location */
 				if (count > bestcount ||

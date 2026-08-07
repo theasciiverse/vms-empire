@@ -288,7 +288,7 @@ void print_sector(int whose, view_map_t vmap[], int sector)
 	int first_row, first_col, last_row, last_col;
 	int sector_rows, sector_cols;
 	int display_rows, display_cols;
-	int r, c, display_row, display_col;
+	int r, display_row, display_col;
 
 	save_sector = sector; /* remember last sector displayed */
 	change_ok = false;    /* we are displaying a new sector */
@@ -351,7 +351,8 @@ void print_sector(int whose, view_map_t vmap[], int sector)
 
 	/* print x-coordinates along bottom of screen */
 	for (display_col = 0; display_col < display_cols; display_col++) {
-		c = map_axis_at(ref_col, display_col, MAP_WIDTH);
+		int c = map_axis_at(ref_col, display_col, MAP_WIDTH);
+
 		if (!game.tflag && c >= MAP_WIDTH)
 			break;
 		if (c % 10 == 0 || (game.tflag && c == 1))
@@ -458,19 +459,21 @@ Display the portion of the map that appears on the screen.
 
 static void display_screen(view_map_t vmap[]) {
 	int display_rows, display_cols;
-	int r, c, display_row, display_col;
-	loc_t t;
+	int display_row, display_col;
 
 	display_rows = game.lines - NUMTOPS - 1; /* num lines to display */
 	display_cols = game.cols - NUMSIDES;
 
 	for (display_row = 0; display_row < display_rows; display_row++) {
-		r = map_axis_at(ref_row, display_row, MAP_HEIGHT);
+		int r = map_axis_at(ref_row, display_row, MAP_HEIGHT);
+
 		if (!game.tflag && r >= MAP_HEIGHT)
 			break;
 
 		for (display_col = 0; display_col < display_cols; display_col++) {
-			c = map_axis_at(ref_col, display_col, MAP_WIDTH);
+			int c = map_axis_at(ref_col, display_col, MAP_WIDTH);
+			loc_t t;
+
 			if (!game.tflag && c >= MAP_WIDTH)
 				break;
 

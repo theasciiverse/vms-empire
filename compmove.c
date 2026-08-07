@@ -127,7 +127,6 @@ build carriers, as we don't have a good strategy for moving these.
 
 static void do_cities(void) {
 	int i;
-	bool is_lake;
 
 	for (i = 0; i < NUM_CITY; i++) /* new production */
 		if (game.city[i].owner == COMP) {
@@ -139,7 +138,8 @@ static void do_cities(void) {
 		}
 	for (i = 0; i < NUM_CITY; i++) /* produce and change */
 		if (game.city[i].owner == COMP) {
-			is_lake = lake(game.city[i].loc);
+			bool is_lake = lake(game.city[i].loc);
+
 			if (game.city[i].work++ >=
 			    (long)piece_attr[(int)game.city[i].prod]
 			        .build_time) {
@@ -718,7 +718,6 @@ c)  Any other attackable city is marked with a '0'.
 
 static void make_unload_map(view_map_t *xmap, const view_map_t *vmap) {
 	count_t i;
-	scan_counts_t counts;
 
 	(void)memcpy(xmap, vmap, sizeof(view_map_t) * MAP_SIZE);
 	unmark_explore_locs(xmap);
@@ -733,6 +732,7 @@ static void make_unload_map(view_map_t *xmap, const view_map_t *vmap) {
 
 	for (i = 0; i < MAP_SIZE; i++)
 		if (strchr("O*", vmap[i].contents)) {
+			scan_counts_t counts;
 			int total_cities;
 
 			vmap_cont(tcont_map, xmap, i,

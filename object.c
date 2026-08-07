@@ -30,14 +30,15 @@ Distances are computed as straight-line distances.
 int find_nearest_city(loc_t loc, int owner, loc_t *city_loc) {
 	loc_t best_loc;
 	long best_dist;
-	long new_dist, i;
+	long i;
 
 	best_dist = INFINITY;
 	best_loc = loc;
 
 	for (i = 0; i < NUM_CITY; i++)
 		if (game.city[i].owner == owner) {
-			new_dist = dist(loc, game.city[i].loc);
+			long new_dist = dist(loc, game.city[i].loc);
+
 			if (new_dist < best_dist) {
 				best_dist = new_dist;
 				best_loc = game.city[i].loc;
