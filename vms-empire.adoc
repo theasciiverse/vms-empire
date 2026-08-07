@@ -9,7 +9,7 @@
 // spellcheck: add Caltech DEC's DECUS VMS Leres Amdahl savefile dest neh
 // spellcheck: add func VAY AFPT QWE ZXC Idir Vpiece Jdir
 // spellcheck: add Printsector sav empmovie WIDTHxHEIGHT
-
+// spellcheck: add pathfinding unowned dir dat
 
 == NAME
 
@@ -119,7 +119,7 @@ The pieces are as follows:
 
 [cols=",,,,,,",options="header"]
 |===
-|Piece |You |Enemy |Moves |Hits |Str |Cost
+|Piece |You |Enemy |Moves |Hits |Strength |Cost
 |Army |A |a |1 |1 |1 |5(6)
 |Fighter |F |f |8 |1 |1 |10(12)
 |Patrol Boat |P |p |4 |1 |1 |15(18)
