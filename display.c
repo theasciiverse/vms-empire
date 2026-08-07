@@ -563,8 +563,8 @@ void print_zoom_cell(view_map_t *vmap, int row, int col, int row_inc,
 	char cell;
 
 	cell = ' ';
-	for (r = row; r < row + row_inc; r++) {
-		for (c = col; c < col + col_inc; c++) {
+	for (r = row; r < row + row_inc && r < MAP_HEIGHT; r++) {
+		for (c = col; c < col + col_inc && c < MAP_WIDTH; c++) {
 			if (strchr(zoom_list,
 			           vmap[row_col_loc(r, c)].contents) <
 			    strchr(zoom_list, cell)) {
@@ -623,8 +623,8 @@ void print_pzoom_cell(path_map_t *pmap, view_map_t *vmap, int row, int col,
 	sum = 0;
 	d = 0; /* number of squares in cell */
 
-	for (r = row; r < row + row_inc; r++) {
-		for (c = col; c < col + col_inc; c++) {
+	for (r = row; r < row + row_inc && r < MAP_HEIGHT; r++) {
+		for (c = col; c < col + col_inc && c < MAP_WIDTH; c++) {
 			sum += pmap[row_col_loc(r, c)].cost;
 			d += 1;
 		}
@@ -789,8 +789,8 @@ void print_movie_cell(const char *mbuf, int row, int col, int row_inc, int col_i
 	char cell;
 
 	cell = ' ';
-	for (r = row; r < row + row_inc; r++) {
-		for (c = col; c < col + col_inc; c++) {
+	for (r = row; r < row + row_inc && r < MAP_HEIGHT; r++) {
+		for (c = col; c < col + col_inc && c < MAP_WIDTH; c++) {
 			if (strchr(zoom_list, mbuf[row_col_loc(r, c)]) <
 			    strchr(zoom_list, cell)) {
 				cell = mbuf[row_col_loc(r, c)];
