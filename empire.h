@@ -265,8 +265,6 @@ typedef struct {
 #define SECTOR_ROWS 5 /* number of vertical sectors */
 #define SECTOR_COLS 2 /* number of horizontal sectors */
 #define NUM_SECTORS (SECTOR_ROWS * SECTOR_COLS) /* total sectors */
-#define ROWS_PER_SECTOR ((MAP_HEIGHT + SECTOR_ROWS - 1) / SECTOR_ROWS)
-#define COLS_PER_SECTOR ((MAP_WIDTH + SECTOR_COLS - 1) / SECTOR_COLS)
 
 /* Information we need for finding a path for moving a piece. */
 

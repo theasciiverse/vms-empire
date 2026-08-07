@@ -60,6 +60,38 @@ static int screen_axis_offset(int coordinate, int reference, int dimension) {
 	return offset;
 }
 
+/* Split an axis proportionally so partial sectors remain addressable. */
+
+static int sector_axis_boundary(int sector, int dimension, int count) {
+	return (sector * dimension + count - 1) / count;
+}
+
+static int sector_axis_center(int sector, int dimension, int count) {
+	int first = sector_axis_boundary(sector, dimension, count);
+	int last = sector_axis_boundary(sector + 1, dimension, count) - 1;
+	int center = first + (last - first + 1) / 2;
+
+	if (center < 1)
+		return 1;
+	if (center > dimension - 2)
+		return dimension - 2;
+	return center;
+}
+
+int loc_sector(loc_t loc) {
+	int row = loc_row(loc) * SECTOR_ROWS / MAP_HEIGHT;
+	int col = loc_col(loc) * SECTOR_COLS / MAP_WIDTH;
+
+	return row_col_sector(row, col);
+}
+
+loc_t sector_loc(int sector) {
+	ASSERT(sector >= 0 && sector < NUM_SECTORS);
+	return row_col_loc(
+	    sector_axis_center(sector_row(sector), MAP_HEIGHT, SECTOR_ROWS),
+	    sector_axis_center(sector_col(sector), MAP_WIDTH, SECTOR_COLS));
+}
+
 #ifdef A_COLOR
 void init_colors(void) {
 	start_color();
@@ -251,6 +283,7 @@ void print_sector(int whose, view_map_t vmap[], int sector)
 	void display_screen(view_map_t[]);
 
 	int first_row, first_col, last_row, last_col;
+	int sector_rows, sector_cols;
 	int display_rows, display_cols;
 	int r, c, display_row, display_col;
 
@@ -261,10 +294,18 @@ void print_sector(int whose, view_map_t vmap[], int sector)
 	display_cols = game.cols - NUMSIDES;
 
 	/* compute row and column edges of sector */
-	first_row = sector_row(sector) * ROWS_PER_SECTOR;
-	first_col = sector_col(sector) * COLS_PER_SECTOR;
-	last_row = first_row + ROWS_PER_SECTOR - 1;
-	last_col = first_col + COLS_PER_SECTOR - 1;
+	first_row =
+	    sector_axis_boundary(sector_row(sector), MAP_HEIGHT, SECTOR_ROWS);
+	first_col =
+	    sector_axis_boundary(sector_col(sector), MAP_WIDTH, SECTOR_COLS);
+	last_row = sector_axis_boundary(sector_row(sector) + 1, MAP_HEIGHT,
+	                                SECTOR_ROWS) -
+	           1;
+	last_col = sector_axis_boundary(sector_col(sector) + 1, MAP_WIDTH,
+	                                SECTOR_COLS) -
+	           1;
+	sector_rows = last_row - first_row + 1;
+	sector_cols = last_col - first_col + 1;
 
 	if (game.tflag ||
 	    !(whose == whose_map      /* correct map is on screen? */
@@ -279,21 +320,14 @@ void print_sector(int whose, view_map_t vmap[], int sector)
 	/* figure out first row and col to print; subtract half
 	   the extra lines from the first line */
 
-	ref_row = first_row - (display_rows - ROWS_PER_SECTOR) / 2;
-	ref_col = first_col - (display_cols - COLS_PER_SECTOR) / 2;
+	ref_row = first_row - (display_rows - sector_rows) / 2;
+	ref_col = first_col - (display_cols - sector_cols) / 2;
 
 	if (game.tflag) {
-		int center_row = first_row + ROWS_PER_SECTOR / 2;
-		int center_col = first_col + COLS_PER_SECTOR / 2;
-
-		if (center_row < 1)
-			center_row = 1;
-		else if (center_row > MAP_HEIGHT - 2)
-			center_row = MAP_HEIGHT - 2;
-		if (center_col < 1)
-			center_col = 1;
-		else if (center_col > MAP_WIDTH - 2)
-			center_col = MAP_WIDTH - 2;
+		int center_row = sector_axis_center(
+		    sector_row(sector), MAP_HEIGHT, SECTOR_ROWS);
+		int center_col = sector_axis_center(
+		    sector_col(sector), MAP_WIDTH, SECTOR_COLS);
 
 		ref_row = wrap_axis(center_row - display_rows / 2, MAP_HEIGHT);
 		ref_col = wrap_axis(center_col - display_cols / 2, MAP_WIDTH);

@@ -655,19 +655,3 @@ acceptance-test pipeline.
   Other colors:                                                           
   - Production overlay: [128 128 128] (gray)                           
   - Waypoint overlay: [0 255 0] (green)
-
-Bugs found by AI
-----------------
-
-Line number refer to commit 65dd37.
-
-  ### Medium severity
-
-  - Sector selection can create an out-of-range cursor for valid custom geometries. extern.h:70
-    does not clamp partial sectors, and edit.c:164 installs the result directly. For example,
-    sector 4 on an 11x11 map produces a location beyond MAP_SIZE.
-
-  Recommended next steps are to centralize coordinate wrapping/clamping, replace recursive/VLA
-  map work with reusable heap workspaces, make save/movie formats transactional and versioned,
-  and add sanitizer-backed tests covering minimum/default/maximum geometries, partial zoom
-  cells, torus seams, truncated saves, and CLI boundary values.

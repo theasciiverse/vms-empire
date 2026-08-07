@@ -63,15 +63,6 @@ extern int user_lines;
 #define sector_col(sector) ((sector) / SECTOR_ROWS)
 #define row_col_sector(row, col) ((int)((col)*SECTOR_ROWS + (row)))
 
-#define loc_sector(loc)                                                        \
-	row_col_sector(loc_row(loc) / ROWS_PER_SECTOR,                         \
-	               loc_col(loc) / COLS_PER_SECTOR)
-
-#define sector_loc(sector)                                                     \
-	row_col_loc(                                                           \
-	    sector_row(sector) * ROWS_PER_SECTOR + ROWS_PER_SECTOR / 2,        \
-	    sector_col(sector) * COLS_PER_SECTOR + COLS_PER_SECTOR / 2)
-
 /* global routines */
 
 void empire(void);
@@ -122,6 +113,8 @@ void kill_display(void);
 void sector_change(void);
 int cur_sector(void);
 long cur_cursor(void);
+int loc_sector(loc_t loc);
+loc_t sector_loc(int sector);
 void display_loc(int whose, view_map_t vmap[], long loc);
 void display_locx(int whose, view_map_t vmap[], long loc);
 void print_sector(int whose, view_map_t vmap[], int sector);
