@@ -537,16 +537,34 @@ void scan(view_map_t vmap[], loc_t loc) {
 Scan a portion of the board for a satellite.
 */
 
+static int wrap_sat_coordinate(int coordinate, int dimension) {
+	int playable = dimension - 2;
+
+	coordinate = (coordinate - 1) % playable;
+	if (coordinate < 0)
+		coordinate += playable;
+	return coordinate + 1;
+}
+
 void scan_sat(view_map_t vmap[], loc_t loc) {
+	static const int row_delta[8] = {-2, -2, 0, 2, 2, 2, 0, -2};
+	static const int col_delta[8] = {0, 2, 2, 2, 0, -2, -2, -2};
 	int i;
 
 	ASSERT(game.real_map[loc].on_board);
 
 	for (i = 0; i < 8; i++) { /* for each surrounding cell */
-		loc_t xloc = loc + 2 * dir_offset[i];
-		if (xloc >= 0 && xloc < MAP_SIZE &&
-		    game.real_map[xloc].on_board)
-			scan(vmap, xloc);
+		int row = loc_row(loc) + row_delta[i];
+		int col = loc_col(loc) + col_delta[i];
+
+		if (game.tflag) {
+			row = wrap_sat_coordinate(row, MAP_HEIGHT);
+			col = wrap_sat_coordinate(col, MAP_WIDTH);
+		} else if (row <= 0 || row >= MAP_HEIGHT - 1 || col <= 0 ||
+		           col >= MAP_WIDTH - 1) {
+			continue;
+		}
+		scan(vmap, row_col_loc(row, col));
 	}
 	scan(vmap, loc);
 }
