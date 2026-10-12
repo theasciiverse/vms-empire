@@ -20,6 +20,18 @@ game.c -- Routines to initialize, save, and restore a game.
 #include <string.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+/* Windows: no fsync(), and rename() refuses to replace an existing file.
+ * MoveFileExA is declared here because <windows.h> clashes with curses. */
+#include <io.h>
+#define fsync _commit
+__declspec(dllimport) int __stdcall MoveFileExA(const char *, const char *,
+                                                unsigned long);
+#define MOVEFILE_REPLACE_EXISTING 0x1
+#define rename(from, to)                                                       \
+	(MoveFileExA((from), (to), MOVEFILE_REPLACE_EXISTING) ? 0 : -1)
+#endif
+
 static void make_map(void);
 static void place_cities(void);
 static count_t regen_land(count_t placed);

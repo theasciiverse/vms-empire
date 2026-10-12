@@ -73,7 +73,11 @@ void eassert(char *expression, char *file, int line) {
 	fprintf(stderr, "%s\n", buf);
 	fflush(stderr);
 
+#ifdef _WIN32
+	abort(); /* no kill() on Windows */
+#else
 	kill(getpid(), SIGSEGV); /* core dump */
+#endif
 }
 
 /*
