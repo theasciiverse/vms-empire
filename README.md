@@ -11,9 +11,6 @@ av install vms-empire
 av play vms-empire
 ```
 
-Or download the archive for your system from this repository's Releases,
-unpack it and run `./vms-empire` (`vms-empire.exe` on Windows).
-
 ## Credits
 
 Walter Bright wrote Empire in the early 1970s; Chuck Simmons wrote this C
